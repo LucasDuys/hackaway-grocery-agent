@@ -1,0 +1,5 @@
+Contact: mailto:security@picnic.nl
+Contact: mailto:security@picnic.de
+Contact: mailto:security@picnic-app.fr
+Expires: 2099-12-31T23:59:59.999Z
+Preferred-Languages: en,nl,de,fr
