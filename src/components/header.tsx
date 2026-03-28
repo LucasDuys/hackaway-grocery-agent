@@ -4,6 +4,7 @@ interface HeaderProps {
   isTransparencyMode: boolean;
   onToggleMode: () => void;
   pipelineStatus?: string;
+  pipelineMode?: "auto" | "custom" | null;
   demoMode?: boolean;
   onToggleDemo?: () => void;
 }
@@ -12,11 +13,12 @@ export function Header({
   isTransparencyMode,
   onToggleMode,
   pipelineStatus,
+  pipelineMode,
   demoMode,
   onToggleDemo,
 }: HeaderProps) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between bg-[var(--picnic-red)] px-5 shadow-sm">
+    <header className="flex h-14 shrink-0 items-center justify-between bg-[var(--picnic-red)] px-3 sm:px-5 shadow-sm">
       {/* Left: Logo */}
       <div className="flex items-center gap-2.5">
         <svg
@@ -38,12 +40,23 @@ export function Header({
         </span>
       </div>
 
-      {/* Center: Pipeline status + Demo toggle */}
+      {/* Center: Pipeline status + Mode badge + Demo toggle */}
       <div className="flex items-center gap-3">
+        {pipelineMode && (
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
+              pipelineMode === "auto"
+                ? "bg-blue-400/30 text-white"
+                : "bg-white/20 text-white"
+            }`}
+          >
+            {pipelineMode === "auto" ? "Auto Mode" : "Custom Mode"}
+          </span>
+        )}
         {pipelineStatus && (
           <span className="flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
             <span
-              className={`inline-block h-2 w-2 rounded-full ${
+              className={`inline-block h-2 w-2 rounded-full shrink-0 ${
                 pipelineStatus === "Agents working..."
                   ? "animate-pulse bg-yellow-300"
                   : pipelineStatus === "Pipeline complete"
@@ -51,7 +64,7 @@ export function Header({
                     : "bg-white/60"
               }`}
             />
-            {pipelineStatus}
+            <span className="pipeline-status-text">{pipelineStatus}</span>
           </span>
         )}
         {onToggleDemo && (

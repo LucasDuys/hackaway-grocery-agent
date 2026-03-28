@@ -194,6 +194,7 @@ export interface CartSummary {
   savings: number; // cents
   substitutionCount: number;
   deliverySlot: ScheduleAgentOutput["selectedSlot"] | null;
+  mode?: "auto" | "custom";
 }
 
 // === User Intent ===

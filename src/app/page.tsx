@@ -24,9 +24,16 @@ export default function Home() {
     error,
     demoMode,
     setDemoMode,
+    pipelineMode,
     orchestrate,
     reset,
   } = useOrchestration();
+
+  const EXAMPLE_PROMPTS = [
+    "Sort this week's shop",
+    "Sort this week's shop, lasagna Wednesday, under 60 euro",
+    "Sort this week's shop, friends Saturday, keep it healthy",
+  ];
 
   // Extract meal plan data from activity log (meal-planner SUGGEST events)
   const mealPlanData = useMemo(() => {
@@ -66,6 +73,7 @@ export default function Home() {
         isTransparencyMode={isTransparencyMode}
         onToggleMode={() => setIsTransparencyMode((prev) => !prev)}
         pipelineStatus={pipelineStatus}
+        pipelineMode={pipelineMode}
         demoMode={demoMode}
         onToggleDemo={() => {
           reset();
@@ -108,6 +116,19 @@ export default function Home() {
                   <p className="max-w-xs text-sm text-[var(--text-muted)]">
                     Describe your plans and we will put together a smart grocery list for you.
                   </p>
+                  {!isRunning && (
+                    <div className="mt-2 flex flex-col gap-2">
+                      {EXAMPLE_PROMPTS.map((prompt) => (
+                        <button
+                          key={prompt}
+                          onClick={() => orchestrate(prompt)}
+                          className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:border-[var(--picnic-red)] hover:bg-[var(--picnic-red-light)] hover:text-[var(--picnic-red)]"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -128,6 +149,9 @@ export default function Home() {
               onReset={reset}
               showReset={!!(cartSummary || activityLog.length > 0)}
             />
+
+            {/* Spacer to prevent content from hiding behind fixed input bar on mobile */}
+            <div className="input-bar-spacer" />
 
             {/* Error display */}
             {error && (

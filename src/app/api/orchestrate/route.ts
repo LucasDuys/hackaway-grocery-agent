@@ -11,6 +11,7 @@ import type {
   BudgetOptimizerOutput,
   OrderAnalystOutput,
   MealPlannerOutput,
+  ScheduleAgentOutput,
   AgentName,
   AgentStatus,
   ActionType,
@@ -149,27 +150,40 @@ export async function POST(req: Request) {
 
         const intent = await parseIntent(input);
 
+        // ---------------------------------------------------------------
+        // Auto mode detection: no meals, no guest events = replenishment only
+        // ---------------------------------------------------------------
+        const isAutoMode = intent.meals.length === 0 && intent.guestEvents.length === 0;
+
         sendAgentEvent(
           send,
           "orchestrator",
           "APPROVE",
-          intent.meals.length > 0
-            ? `Understood: ${intent.meals.length} meal(s) planned${intent.budget ? `, budget ${centsToEur(intent.budget)}` : ""}`
-            : `Understood: weekly grocery shop${intent.budget ? `, budget ${centsToEur(intent.budget)}` : ""}`
+          isAutoMode
+            ? "Auto mode: building cart from your purchase patterns"
+            : intent.meals.length > 0
+              ? `Understood: ${intent.meals.length} meal(s) planned${intent.budget ? `, budget ${centsToEur(intent.budget)}` : ""}`
+              : `Understood: weekly grocery shop${intent.budget ? `, budget ${centsToEur(intent.budget)}` : ""}`
         );
+
+        // Send mode event so the UI can display the mode badge
+        send({ type: "mode", data: { mode: isAutoMode ? "auto" : "custom" } });
 
         // ---------------------------------------------------------------
         // Step 1b: Synthesize meals from guest events without a matching meal
+        // (skipped in auto mode)
         // ---------------------------------------------------------------
-        for (const event of intent.guestEvents) {
-          const hasMealForDay = intent.meals.some(
-            (m) => m.day.toLowerCase() === event.day.toLowerCase()
-          );
-          if (!hasMealForDay) {
-            intent.meals.push({
-              day: event.day,
-              dish: `dinner for ${event.guestCount} guests (${event.description})`,
-            });
+        if (!isAutoMode) {
+          for (const event of intent.guestEvents) {
+            const hasMealForDay = intent.meals.some(
+              (m) => m.day.toLowerCase() === event.day.toLowerCase()
+            );
+            if (!hasMealForDay) {
+              intent.meals.push({
+                day: event.day,
+                dish: `dinner for ${event.guestCount} guests (${event.description})`,
+              });
+            }
           }
         }
 
@@ -202,10 +216,14 @@ export async function POST(req: Request) {
         const analysis = runFullAnalysis(data.orders);
 
         // ---------------------------------------------------------------
-        // Step 4: Run 3 agents in parallel (LLM calls)
+        // Step 4: Run agents (skip meal planner in auto mode)
         // ---------------------------------------------------------------
         sendAgentStatus(send, "order-analyst", "running", "Analyzing order history...");
-        sendAgentStatus(send, "meal-planner", "running", "Planning meals...");
+        if (!isAutoMode) {
+          sendAgentStatus(send, "meal-planner", "running", "Planning meals...");
+        } else {
+          sendAgentStatus(send, "meal-planner", "complete", "Skipped (auto mode)");
+        }
         sendAgentStatus(send, "schedule-agent", "running", "Finding delivery slot...");
 
         // We need the order analyst result for the meal planner, but the task
@@ -239,11 +257,20 @@ export async function POST(req: Request) {
           `${orderResult.recommendedItems.length} items recommended`
         );
 
-        // Now run meal planner + schedule agent in parallel
-        const [mealResult, scheduleResult] = await Promise.all([
-          runMealPlanner(intent, data, orderResult),
-          runScheduleAgent(data, analysis),
-        ]);
+        // In auto mode, skip meal planner entirely; run schedule agent alone.
+        // In custom mode, run meal planner + schedule agent in parallel.
+        let mealResult: MealPlannerOutput;
+        let scheduleResult: ScheduleAgentOutput;
+
+        if (isAutoMode) {
+          mealResult = { meals: [], additionalIngredients: [] };
+          scheduleResult = await runScheduleAgent(data, analysis);
+        } else {
+          [mealResult, scheduleResult] = await Promise.all([
+            runMealPlanner(intent, data, orderResult),
+            runScheduleAgent(data, analysis),
+          ]);
+        }
 
         // Build catalog price map (used for meal cost correction and cart price correction)
         const catalogPriceMap = new Map<string, number>();
@@ -354,7 +381,9 @@ export async function POST(req: Request) {
           (sum, item) => sum + item.price * item.quantity,
           0
         );
-        const budget = intent.budget ?? analysis.budget.avgWeeklySpend;
+        const budget = isAutoMode
+          ? analysis.budget.avgWeeklySpend
+          : (intent.budget ?? analysis.budget.avgWeeklySpend);
         let savings = 0;
         let substitutionCount = 0;
         let budgetOptimizerResult: BudgetOptimizerOutput | null = null;
@@ -508,6 +537,7 @@ export async function POST(req: Request) {
           deliverySlot: scheduleResult.selectedSlot.slotId
             ? scheduleResult.selectedSlot
             : null,
+          mode: isAutoMode ? "auto" : "custom",
         };
 
         sendCartSummary(send, cartSummary);

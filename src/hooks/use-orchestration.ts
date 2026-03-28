@@ -112,6 +112,7 @@ export function useOrchestration() {
   const [streamedText, setStreamedText] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pipelineMode, setPipelineMode] = useState<"auto" | "custom" | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -128,6 +129,7 @@ export function useOrchestration() {
     setStreamedText("");
     setIsRunning(false);
     setError(null);
+    setPipelineMode(null);
   }, []);
 
   const runDemo = useCallback((input: string) => {
@@ -137,6 +139,7 @@ export function useOrchestration() {
     setAgentStates({ ...initialAgentStates });
     setCartSummary(null);
     setStreamedText("");
+    setPipelineMode("custom"); // demo always shows custom mode
 
     let cumulativeDelay = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -189,6 +192,7 @@ export function useOrchestration() {
     setAgentStates({ ...initialAgentStates });
     setCartSummary(null);
     setStreamedText("");
+    setPipelineMode(null);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -244,6 +248,8 @@ export function useOrchestration() {
                 details: parsed.data.details,
               };
               setActivityLog((prev) => [...prev, agentEvent]);
+            } else if (parsed.type === "mode") {
+              setPipelineMode(parsed.data.mode);
             } else if (parsed.type === "cart-summary") {
               setCartSummary(parsed.data);
             } else if (parsed.type === "streamed-text") {
@@ -287,6 +293,7 @@ export function useOrchestration() {
     error,
     demoMode,
     setDemoMode,
+    pipelineMode,
     orchestrate,
     reset,
   };
