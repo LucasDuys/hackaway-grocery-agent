@@ -169,6 +169,48 @@ export class PicnicClient {
     return data as T;
   }
 
+  /**
+   * Execute a POST request against a direct REST endpoint (not hackathon-pages).
+   *
+   * @param path  - absolute path, e.g. "/api/15/cart/set_delivery_slot"
+   * @param body  - raw JSON body (NOT wrapped in { payload })
+   * @param retry - internal flag
+   */
+  async postDirect<T = unknown>(
+    path: string,
+    body: Record<string, unknown>,
+    retry = true
+  ): Promise<T> {
+    await this.ensureAuth();
+
+    const url = `https://storefront-prod.nl.picnicinternational.com${path}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.authHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    // set_delivery_slot returns empty body (500) for invalid slot IDs
+    const text = await res.text();
+    if (!text) {
+      throw new Error(`Empty response from ${path} (HTTP ${res.status})`);
+    }
+
+    const data = JSON.parse(text) as T;
+
+    if (this.isEmptyResponse(data) && retry) {
+      this.token = null;
+      return this.postDirect<T>(path, body, false);
+    }
+
+    return data;
+  }
+
   // ---------------------------------------------------------------------------
   // Internal utilities
   // ---------------------------------------------------------------------------
