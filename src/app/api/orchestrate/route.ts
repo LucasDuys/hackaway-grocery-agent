@@ -269,9 +269,33 @@ export async function POST(req: Request) {
         sendAgentStatus(send, "schedule-agent", "complete", "Slot selected");
 
         // ---------------------------------------------------------------
-        // Step 5: Merge results, calculate total cost
+        // Step 5: Merge results, correct prices from catalog, calculate total
         // ---------------------------------------------------------------
         const mergedItems = mergeCartItems(orderResult, mealResult, data);
+
+        // Correct prices: use real catalog prices instead of LLM-hallucinated ones
+        const catalogPriceMap = new Map<string, number>();
+        for (const p of productCatalog as Array<{ selling_unit_id: string; price: number }>) {
+          catalogPriceMap.set(p.selling_unit_id, p.price);
+        }
+        // Also use prices from order history as a fallback
+        for (const order of data.orders) {
+          for (const item of order.items) {
+            if (!catalogPriceMap.has(item.selling_unit_id) && item.price > 0) {
+              catalogPriceMap.set(item.selling_unit_id, item.price);
+            }
+          }
+        }
+        for (const item of mergedItems) {
+          const realPrice = catalogPriceMap.get(item.itemId);
+          if (realPrice && realPrice > 0) {
+            item.price = realPrice;
+          } else if (item.price <= 0) {
+            // If no catalog price and LLM returned 0, estimate from similar items
+            item.price = 299; // EUR 2.99 default for unknown items
+          }
+        }
+
         let totalCost = mergedItems.reduce(
           (sum, item) => sum + item.price * item.quantity,
           0
