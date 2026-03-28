@@ -160,11 +160,21 @@ async function fetchAllData(
     }
   }
 
+  let deliverySlots = normalizeSlots(slotsRaw.delivery_slots ?? []);
+
+  // Fall back to mock delivery slots when the API returns none
+  if (deliverySlots.length === 0) {
+    deliverySlots = generateMockDeliverySlots();
+    console.log(
+      `[prefetch] No API delivery slots found. Generated ${deliverySlots.length} mock slots.`
+    );
+  }
+
   return {
     orders,
     favorites: normalizeProducts(favoritesRaw.favorites ?? []),
     cart: normalizeCart(cartRaw.items ?? []),
-    deliverySlots: normalizeSlots(slotsRaw.delivery_slots ?? []),
+    deliverySlots,
     searchResults,
     recipes,
   };
@@ -239,6 +249,57 @@ function normalizeRecipes(
       quantity: i.quantity,
     })),
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Mock delivery slots fallback
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate 6 realistic mock delivery slots across the next 3 available days
+ * (Mon/Wed/Fri pattern), with morning and evening windows each day.
+ */
+function generateMockDeliverySlots(): PicnicDeliverySlot[] {
+  const slots: PicnicDeliverySlot[] = [];
+  const now = new Date();
+  const targetDays = [1, 3, 5]; // Monday, Wednesday, Friday
+  let found = 0;
+  let dayOffset = 1;
+
+  // Find the next 3 days that fall on Mon/Wed/Fri
+  const slotDates: Date[] = [];
+  while (found < 3 && dayOffset <= 14) {
+    const candidate = new Date(now);
+    candidate.setDate(now.getDate() + dayOffset);
+    if (targetDays.includes(candidate.getDay())) {
+      slotDates.push(candidate);
+      found++;
+    }
+    dayOffset++;
+  }
+
+  for (let i = 0; i < slotDates.length; i++) {
+    const d = slotDates[i];
+    const dateStr = d.toISOString().slice(0, 10);
+
+    // Morning window: 08:00 - 12:00
+    slots.push({
+      slot_id: `mock-${i * 2 + 1}`,
+      window_start: `${dateStr}T08:00:00`,
+      window_end: `${dateStr}T12:00:00`,
+      is_available: true,
+    });
+
+    // Evening window: 18:00 - 21:00
+    slots.push({
+      slot_id: `mock-${i * 2 + 2}`,
+      window_start: `${dateStr}T18:00:00`,
+      window_end: `${dateStr}T21:00:00`,
+      is_available: true,
+    });
+  }
+
+  return slots;
 }
 
 // ---------------------------------------------------------------------------

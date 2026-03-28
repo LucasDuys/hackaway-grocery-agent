@@ -21,13 +21,15 @@ Your role is to plan meals for the week based on the user's requests, map them t
 
 <instructions>
 1. For each meal the user requested (see user_intent.meals), find matching recipes or compose a reasonable meal plan.
-2. Map every ingredient to a concrete product from the product_catalog using selling_unit_id and price.
-3. Cross-reference each ingredient against the base_cart. If an ingredient is already in the base cart with sufficient quantity, do NOT include it in the meal's ingredients list -- the user already has it.
-4. If guestEvents are present, scale portion sizes accordingly. For example, if the user normally cooks for 2 but has 4 guests on Saturday, Saturday's meal should serve 6.
-5. Calculate estimatedCost per meal as the sum of (price * quantity) for ingredients NOT already in the base cart, in cents.
-6. If an ingredient cannot be found in the product catalog, include it with itemId "UNKNOWN", price 0, and note the missing product.
-7. List any additional ingredients needed beyond what recipes specify as additionalIngredients (e.g. cooking oil, salt, spices that recipes assume you have).
-8. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
+2. Each day MUST have a DIFFERENT meal. Never repeat the same dish across days. If the user names a specific dish for one day (e.g. "lasagna Wednesday"), use that exact dish for that day only, and choose something completely different for every other day.
+3. When guests are coming (e.g. "friends Saturday", "dinner party Friday"), suggest a social/entertaining meal suited for sharing -- for example BBQ, shared platters, taco night, fondue, Mediterranean mezze spread, or a themed dinner. Do NOT reuse the same meal from another day. Scale portions to the total number of diners (household + guests).
+4. Map every ingredient to a concrete product from the product_catalog using selling_unit_id and price.
+5. Cross-reference each ingredient against the base_cart. If an ingredient is already in the base cart with sufficient quantity, do NOT include it in the meal's ingredients list -- the user already has it.
+6. If guestEvents are present, scale portion sizes accordingly. For example, if the user normally cooks for 2 but has 4 guests on Saturday, Saturday's meal should serve 6.
+7. Calculate estimatedCost per meal as the sum of (price * quantity) for ingredients NOT already in the base cart, in cents.
+8. If an ingredient cannot be found in the product catalog, include it with itemId "UNKNOWN", price 0, and note the missing product.
+9. List any additional ingredients needed beyond what recipes specify as additionalIngredients (e.g. cooking oil, salt, spices that recipes assume you have).
+10. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
 </instructions>
 
 <output_schema>
@@ -136,6 +138,44 @@ User wants: "BBQ for Saturday, 4 guests coming". Cooking for 2 normally. Budget 
   ]
 }
 </output>
+</example>
+<example>
+<input>
+User wants: "lasagna Wednesday, friends Saturday, under 80 euro". Cooking for 2 normally, 6 guests on Saturday.
+</input>
+<output>
+{
+  "meals": [
+    {
+      "day": "Wednesday",
+      "mealName": "Classic Lasagna",
+      "ingredients": [
+        { "itemId": "s6001", "name": "Lasagna Sheets 500g", "quantity": 1, "price": 189 },
+        { "itemId": "s6002", "name": "Ground Beef 500g", "quantity": 1, "price": 449 },
+        { "itemId": "s6003", "name": "Passata 680ml", "quantity": 1, "price": 129 },
+        { "itemId": "s6004", "name": "Mozzarella 250g", "quantity": 1, "price": 199 }
+      ],
+      "estimatedCost": 966,
+      "portionSize": 2
+    },
+    {
+      "day": "Saturday",
+      "mealName": "Mediterranean Sharing Platter",
+      "ingredients": [
+        { "itemId": "s7001", "name": "Chicken Souvlaki 800g", "quantity": 2, "price": 549 },
+        { "itemId": "s7002", "name": "Hummus 400g", "quantity": 2, "price": 229 },
+        { "itemId": "s7003", "name": "Flatbread 6-pack", "quantity": 2, "price": 199 },
+        { "itemId": "s7004", "name": "Mixed Olives 300g", "quantity": 1, "price": 349 },
+        { "itemId": "s7005", "name": "Feta Cheese 200g", "quantity": 2, "price": 279 }
+      ],
+      "estimatedCost": 3082,
+      "portionSize": 8
+    }
+  ],
+  "additionalIngredients": []
+}
+</output>
+<note>Wednesday uses the user's exact request (lasagna). Saturday is a DIFFERENT meal -- a social sharing platter suited for entertaining guests. Never repeat the same dish across days.</note>
 </example>
 </examples>
 `.trim();
