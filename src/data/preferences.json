@@ -23,12 +23,24 @@
       "preferred": "Spa bruiswater mojito",
       "rejected": "Spa bruiswater mojito",
       "learnedAt": "2026-03-28T13:24:45.187Z"
+    },
+    {
+      "category": "Swapping Dettol handzeep pomp (EUR 5.90) for Palmolive naturals amandel navulling handzeep (EUR 2.35) saves EUR 3.55 per pack. Both are reputable hand soap brands, but the Palmolive refill delivers similar gentle cleansing for much less -- a sensible budget tradeoff.",
+      "preferred": "Palmolive naturals amandel navulling handzeep",
+      "rejected": "Dettol handzeep pomp gevoelige huid",
+      "learnedAt": "2026-03-28T13:39:59.985Z"
+    },
+    {
+      "category": "Substituting vegan gehakt (EUR 6.49) for Picnic varkensgehaktballetjes (EUR 2.89) saves EUR 3.60 per pack. Switching from plant-based to pork meatballs may not fit all dietary needs, but is the most affordable protein swap. If you strongly prefer vegan, consider removing this item instead.",
+      "preferred": "Picnic varkensgehaktballetjes",
+      "rejected": "vegan gehakt",
+      "learnedAt": "2026-03-28T13:39:59.985Z"
     }
   ],
   "budgetPatterns": {
-    "averageBudget": 10913,
-    "lastStatedBudget": 6000,
-    "typicalSpend": 18574
+    "averageBudget": 9390,
+    "lastStatedBudget": 10000,
+    "typicalSpend": 5515
   },
   "deliveryPreferences": {
     "preferredDay": "Monday",
@@ -39,6 +51,6 @@
   ],
   "neverSuggest": [],
   "alwaysInclude": [],
-  "runCount": 5,
-  "lastRunAt": "2026-03-28T13:33:22.884Z"
+  "runCount": 9,
+  "lastRunAt": "2026-03-28T13:48:30.694Z"
 }
