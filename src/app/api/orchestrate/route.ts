@@ -266,6 +266,19 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------------
         const analysis = runFullAnalysis(data.orders);
 
+        // Build catalog price map early (used throughout the pipeline)
+        const catalogPriceMap = new Map<string, number>();
+        for (const p of productCatalog as Array<{ selling_unit_id: string; price: number }>) {
+          catalogPriceMap.set(p.selling_unit_id, p.price);
+        }
+        for (const order of data.orders) {
+          for (const item of order.items) {
+            if (!catalogPriceMap.has(item.selling_unit_id) && item.price > 0) {
+              catalogPriceMap.set(item.selling_unit_id, item.price);
+            }
+          }
+        }
+
         // ---------------------------------------------------------------
         // Step 4: Run agents (skip meal planner in auto mode)
         // ---------------------------------------------------------------
@@ -318,11 +331,16 @@ export async function POST(req: Request) {
         );
 
         // Handoff: Order Analyst -> Orchestrator
+        // Recalculate total from catalog prices (LLM hallucinates totals)
+        const orderAnalystRealTotal = orderResult.recommendedItems.reduce((sum, item) => {
+          const realPrice = catalogPriceMap.get(item.itemId) ?? item.pricePerUnit;
+          return sum + realPrice * item.suggestedQuantity;
+        }, 0);
         sendHandoff(
           send,
           "order-analyst",
           "orchestrator",
-          `${orderResult.recommendedItems.length} items, ${centsToEur(orderResult.totalEstimatedCost)} estimated`
+          `${orderResult.recommendedItems.length} items, ${centsToEur(orderAnalystRealTotal)} estimated`
         );
 
         // In auto mode, skip meal planner entirely; run schedule agent alone.
@@ -351,19 +369,6 @@ export async function POST(req: Request) {
             mealPromise,
             schedulePromise,
           ]);
-        }
-
-        // Build catalog price map (used for meal cost correction and cart price correction)
-        const catalogPriceMap = new Map<string, number>();
-        for (const p of productCatalog as Array<{ selling_unit_id: string; price: number }>) {
-          catalogPriceMap.set(p.selling_unit_id, p.price);
-        }
-        for (const order of data.orders) {
-          for (const item of order.items) {
-            if (!catalogPriceMap.has(item.selling_unit_id) && item.price > 0) {
-              catalogPriceMap.set(item.selling_unit_id, item.price);
-            }
-          }
         }
 
         // Correct meal costs from catalog (LLM guesses round numbers)

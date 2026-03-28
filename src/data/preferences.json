@@ -17,20 +17,28 @@
       "preferred": "Le Petit Moulin boerenbrood volkoren donker meergranen",
       "rejected": "Le Petit Moulin boerenbrood volkoren donker meergranen",
       "learnedAt": "2026-03-28T13:08:58.776Z"
+    },
+    {
+      "category": "Switches to a smaller Spa bruiswater mojito (EUR 1.85 instead of EUR 4.95). The flavor and function (sparkling water with mojito taste) is the same, just a smaller bottle, for EUR 3.10 savings per unit.",
+      "preferred": "Spa bruiswater mojito",
+      "rejected": "Spa bruiswater mojito",
+      "learnedAt": "2026-03-28T13:24:45.187Z"
     }
   ],
   "budgetPatterns": {
-    "averageBudget": 10053,
+    "averageBudget": 10913,
     "lastStatedBudget": 6000,
-    "typicalSpend": 14650
+    "typicalSpend": 18574
   },
   "deliveryPreferences": {
     "preferredDay": "Monday",
     "preferredTimeWindow": "18:00 - 21:00"
   },
-  "dietaryRestrictions": [],
+  "dietaryRestrictions": [
+    "low-sugar"
+  ],
   "neverSuggest": [],
   "alwaysInclude": [],
-  "runCount": 3,
-  "lastRunAt": "2026-03-28T13:16:36.870Z"
+  "runCount": 5,
+  "lastRunAt": "2026-03-28T13:33:22.884Z"
 }

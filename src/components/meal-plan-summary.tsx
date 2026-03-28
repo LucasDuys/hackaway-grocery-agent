@@ -53,7 +53,7 @@ export function MealPlanSummary({ meals }: MealPlanSummaryProps) {
       <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Meal Plan
       </p>
-      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide items-start">
         {meals.map((meal) => {
           const key = `${meal.day}-${meal.mealName}`;
           const isExpanded = expandedKey === key;
@@ -61,8 +61,8 @@ export function MealPlanSummary({ meals }: MealPlanSummaryProps) {
           return (
             <div
               key={key}
-              className="min-w-[130px] shrink-0 rounded-xl bg-[var(--surface)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden cursor-pointer select-none transition-all"
-              style={{ maxWidth: isExpanded ? "280px" : "180px" }}
+              className="shrink-0 rounded-xl bg-[var(--surface)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden cursor-pointer select-none"
+              style={{ width: isExpanded ? "280px" : "180px", transition: "width 0.2s ease" }}
               onClick={() => setExpandedKey(isExpanded ? null : key)}
             >
               {/* Image / Placeholder */}
