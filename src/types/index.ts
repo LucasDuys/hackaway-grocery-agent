@@ -169,8 +169,17 @@ export interface AgentEvent {
   agent: AgentName;
   action: ActionType;
   message: string;
+  rawMessage?: string;
   timestamp: number;
   details?: Record<string, unknown>;
+}
+
+// === Agent Handoff Types (OpenClaw Social Context) ===
+
+export interface AgentHandoff {
+  from: AgentName;
+  to: AgentName;
+  summary: string;
 }
 
 // === Cart UI Types ===

@@ -4,6 +4,13 @@ import { runMealPlanner } from "@/lib/agents/meal-planner";
 import { runScheduleAgent } from "@/lib/agents/schedule-agent";
 import { prefetchAll } from "@/lib/picnic/prefetch";
 import { runFullAnalysis } from "@/lib/analysis";
+import {
+  loadPreferences,
+  savePreferences,
+  derivePreferences,
+  formatPreferencesForPrompt,
+} from "@/lib/memory/preferences";
+import { narrateEvent } from "@/lib/narrative";
 import productCatalog from "@/data/product-catalog.json";
 import type {
   CartItem,
@@ -76,9 +83,17 @@ function sendAgentEvent(
   message: string,
   details?: Record<string, unknown>
 ) {
+  const narrativeMessage = narrateEvent(agent, action, message, details);
   send({
     type: "agent-event",
-    data: { agent, action, message, timestamp: Date.now(), details },
+    data: {
+      agent,
+      action,
+      message: narrativeMessage,
+      rawMessage: message,
+      timestamp: Date.now(),
+      details,
+    },
   });
 }
 
@@ -88,6 +103,15 @@ function sendCartSummary(send: SSESend, cart: CartSummary) {
 
 function sendDone(send: SSESend) {
   send({ type: "done" });
+}
+
+function sendHandoff(
+  send: SSESend,
+  from: AgentName,
+  to: AgentName,
+  summary: string
+) {
+  send({ type: "agent-handoff", data: { from, to, summary } });
 }
 
 function sendError(send: SSESend, message: string) {
@@ -149,6 +173,12 @@ export async function POST(req: Request) {
         sendAgentStatus(send, "orchestrator", "running", "Parsing your request...");
 
         const intent = await parseIntent(input);
+
+        // ---------------------------------------------------------------
+        // Load user preferences from memory
+        // ---------------------------------------------------------------
+        const existingPrefs = loadPreferences();
+        const preferencesContext = formatPreferencesForPrompt(existingPrefs);
 
         // ---------------------------------------------------------------
         // Auto mode detection: no meals, no guest events = replenishment only
@@ -231,7 +261,7 @@ export async function POST(req: Request) {
         // means we need order analyst first OR pass an empty base cart for
         // parallel execution. We run order analyst first, then meal planner +
         // schedule in parallel for correctness.
-        const orderResult = await runOrderAnalyst(analysis, data, intent.budget);
+        const orderResult = await runOrderAnalyst(analysis, data, intent.budget, preferencesContext);
 
         // Send order analyst events
         for (const item of orderResult.recommendedItems.slice(0, 5)) {
@@ -239,7 +269,13 @@ export async function POST(req: Request) {
             send,
             "order-analyst",
             "SUGGEST",
-            `${item.name} -- ${item.reason}`
+            `${item.name} -- ${item.reason}`,
+            {
+              itemName: item.name,
+              reason: item.reason,
+              quantity: item.suggestedQuantity,
+              totalOrders: data.orders.length,
+            }
           );
         }
         if (orderResult.recommendedItems.length > 5) {
@@ -257,6 +293,14 @@ export async function POST(req: Request) {
           `${orderResult.recommendedItems.length} items recommended`
         );
 
+        // Handoff: Order Analyst -> Orchestrator
+        sendHandoff(
+          send,
+          "order-analyst",
+          "orchestrator",
+          `${orderResult.recommendedItems.length} items, ${centsToEur(orderResult.totalEstimatedCost)} estimated`
+        );
+
         // In auto mode, skip meal planner entirely; run schedule agent alone.
         // In custom mode, run meal planner + schedule agent in parallel.
         let mealResult: MealPlannerOutput;
@@ -267,7 +311,7 @@ export async function POST(req: Request) {
           scheduleResult = await runScheduleAgent(data, analysis);
         } else {
           [mealResult, scheduleResult] = await Promise.all([
-            runMealPlanner(intent, data, orderResult),
+            runMealPlanner(intent, data, orderResult, preferencesContext),
             runScheduleAgent(data, analysis),
           ]);
         }
@@ -325,11 +369,21 @@ export async function POST(req: Request) {
             .slice(0, 3)
             .map((i) => i.name)
             .join(", ");
+          const guestEvent = intent.guestEvents.find(
+            (e) => e.day.toLowerCase() === meal.day.toLowerCase()
+          );
           sendAgentEvent(
             send,
             "meal-planner",
             "SUGGEST",
-            `${meal.day}: ${meal.mealName} -- adding ${ingredientNames}${meal.ingredients.length > 3 ? ` +${meal.ingredients.length - 3} more` : ""}`
+            `${meal.day}: ${meal.mealName} -- adding ${ingredientNames}${meal.ingredients.length > 3 ? ` +${meal.ingredients.length - 3} more` : ""}`,
+            {
+              day: meal.day,
+              mealName: meal.mealName,
+              ingredientCount: meal.ingredients.length,
+              isGuestEvent: !!guestEvent,
+              guestCount: guestEvent?.guestCount,
+            }
           );
         }
 
@@ -365,16 +419,49 @@ export async function POST(req: Request) {
           `${mealResult.meals.length} meals planned`
         );
 
+        // Handoff: Meal Planner -> Budget Optimizer
+        if (mealResult.meals.length > 0) {
+          const totalMealIngredients = mealResult.meals.reduce(
+            (sum, m) => sum + m.ingredients.length,
+            0
+          );
+          const totalMealCost = mealResult.meals.reduce(
+            (sum, m) => sum + m.estimatedCost,
+            0
+          );
+          sendHandoff(
+            send,
+            "meal-planner",
+            "budget-optimizer",
+            `${mealResult.meals.length} meals, ${totalMealIngredients} ingredients, ${centsToEur(totalMealCost)}`
+          );
+        }
+
         // Send schedule agent events
         if (scheduleResult.selectedSlot.slotId) {
           sendAgentEvent(
             send,
             "schedule-agent",
             "APPROVE",
-            `Selected ${scheduleResult.selectedSlot.date} ${scheduleResult.selectedSlot.timeWindow} -- ${scheduleResult.selectedSlot.reasoning}`
+            `Selected ${scheduleResult.selectedSlot.date} ${scheduleResult.selectedSlot.timeWindow} -- ${scheduleResult.selectedSlot.reasoning}`,
+            {
+              date: scheduleResult.selectedSlot.date,
+              timeWindow: scheduleResult.selectedSlot.timeWindow,
+              reasoning: scheduleResult.selectedSlot.reasoning,
+            }
           );
         }
         sendAgentStatus(send, "schedule-agent", "complete", "Slot selected");
+
+        // Handoff: Schedule Agent -> Orchestrator
+        if (scheduleResult.selectedSlot.slotId) {
+          sendHandoff(
+            send,
+            "schedule-agent",
+            "orchestrator",
+            `Delivery: ${scheduleResult.selectedSlot.date} ${scheduleResult.selectedSlot.timeWindow}`
+          );
+        }
 
         // ---------------------------------------------------------------
         // Step 5: Merge results, correct prices from catalog, calculate total
@@ -451,9 +538,24 @@ export async function POST(req: Request) {
             send,
             "budget-optimizer",
             "APPROVE",
-            `Cart ${centsToEur(totalCost)} is within budget ${centsToEur(budget)} -- no optimization needed`
+            `Cart ${centsToEur(totalCost)} is within budget ${centsToEur(budget)} -- no optimization needed`,
+            {
+              optimizedTotal: totalCost,
+              budget,
+              swapCount: 0,
+              removalCount: 0,
+              totalSavings: 0,
+            }
           );
           sendAgentStatus(send, "budget-optimizer", "complete", "Within budget");
+
+          // Handoff: Budget Optimizer -> Orchestrator (no changes needed)
+          sendHandoff(
+            send,
+            "budget-optimizer",
+            "orchestrator",
+            `No changes, ${centsToEur(totalCost)} within budget`
+          );
         } else if (totalCost > budget) {
           const overage = totalCost - budget;
 
@@ -467,7 +569,8 @@ export async function POST(req: Request) {
             send,
             "budget-optimizer",
             "REJECT",
-            `Cart total ${centsToEur(totalCost)} exceeds budget ${centsToEur(budget)} by ${centsToEur(overage)}`
+            `Cart total ${centsToEur(totalCost)} exceeds budget ${centsToEur(budget)} by ${centsToEur(overage)}`,
+            { totalCost, budget }
           );
 
           try {
@@ -513,18 +616,32 @@ export async function POST(req: Request) {
             for (const adj of budgetOptimizerResult.adjustments) {
               const isRemoval = adj.replacement.price === 0;
               if (isRemoval) {
+                // Find the item's priority for narrative context
+                const priority = itemPriorities.get(adj.original.itemId) ?? "occasional";
                 sendAgentEvent(
                   send,
                   "budget-optimizer",
                   "REJECT",
-                  `Removed ${adj.original.name} -- ${centsToEur(adj.savings)} saved`
+                  `Removed ${adj.original.name} -- ${centsToEur(adj.savings)} saved`,
+                  {
+                    itemName: adj.original.name,
+                    itemPrice: adj.original.price,
+                    priority,
+                  }
                 );
               } else {
                 sendAgentEvent(
                   send,
                   "budget-optimizer",
                   "SUBSTITUTE",
-                  `${adj.original.name} (${centsToEur(adj.original.price)}) -> ${adj.replacement.name} (${centsToEur(adj.replacement.price)}) -- saves ${centsToEur(adj.savings)}`
+                  `${adj.original.name} (${centsToEur(adj.original.price)}) -> ${adj.replacement.name} (${centsToEur(adj.replacement.price)}) -- saves ${centsToEur(adj.savings)}`,
+                  {
+                    originalName: adj.original.name,
+                    originalPrice: adj.original.price,
+                    replacementName: adj.replacement.name,
+                    replacementPrice: adj.replacement.price,
+                    savings: adj.savings,
+                  }
                 );
               }
             }
@@ -540,17 +657,39 @@ export async function POST(req: Request) {
             savings = budgetOptimizerResult.originalTotal - totalCost;
             substitutionCount = budgetOptimizerResult.adjustments.length;
 
+            // Count swaps vs removals for narrative
+            const swapCount = budgetOptimizerResult.adjustments.filter(
+              (a) => a.replacement.price > 0
+            ).length;
+            const removalCount = budgetOptimizerResult.adjustments.filter(
+              (a) => a.replacement.price === 0
+            ).length;
             sendAgentEvent(
               send,
               "budget-optimizer",
               "APPROVE",
-              `Optimized total: ${centsToEur(totalCost)}${savings > 0 ? ` -- saved ${centsToEur(savings)}` : ""}`
+              `Optimized total: ${centsToEur(totalCost)}${savings > 0 ? ` -- saved ${centsToEur(savings)}` : ""}`,
+              {
+                optimizedTotal: totalCost,
+                budget,
+                swapCount,
+                removalCount,
+                totalSavings: savings,
+              }
             );
             sendAgentStatus(
               send,
               "budget-optimizer",
               "complete",
               `${substitutionCount} adjustment(s), ${centsToEur(savings)} saved`
+            );
+
+            // Handoff: Budget Optimizer -> Orchestrator
+            sendHandoff(
+              send,
+              "budget-optimizer",
+              "orchestrator",
+              `${swapCount} swaps, ${removalCount} removals, ${centsToEur(savings)} saved`
             );
           } catch (err) {
             console.error("Budget optimizer unavailable:", err);
@@ -613,9 +752,67 @@ export async function POST(req: Request) {
           `Cart finalized: ${mergedItems.length} items, ${centsToEur(totalCost)}` +
             (cartSummary.deliverySlot
               ? `, delivery ${cartSummary.deliverySlot.date} ${cartSummary.deliverySlot.timeWindow}`
-              : "")
+              : ""),
+          {
+            itemCount: mergedItems.length,
+            totalCost,
+            deliveryDate: cartSummary.deliverySlot?.date ?? null,
+            deliveryWindow: cartSummary.deliverySlot?.timeWindow ?? null,
+          }
         );
         sendAgentStatus(send, "orchestrator", "complete", "Done");
+
+        // ---------------------------------------------------------------
+        // Step 9: Derive and save preferences, send learning insights
+        // ---------------------------------------------------------------
+        const updatedPrefs = derivePreferences(
+          cartSummary,
+          intent,
+          budgetOptimizerResult,
+          existingPrefs
+        );
+        savePreferences(updatedPrefs);
+
+        // Build human-readable insights from what was learned this run
+        const insights: string[] = [];
+
+        if (updatedPrefs.deliveryPreferences.preferredDay) {
+          const timeNote = updatedPrefs.deliveryPreferences.preferredTimeWindow
+            ? ` ${updatedPrefs.deliveryPreferences.preferredTimeWindow}`
+            : "";
+          insights.push(
+            `Learned: you prefer ${updatedPrefs.deliveryPreferences.preferredDay}${timeNote} deliveries`
+          );
+        }
+
+        if (updatedPrefs.budgetPatterns.averageBudget > 0) {
+          insights.push(
+            `Learned: typical budget is EUR ${(updatedPrefs.budgetPatterns.averageBudget / 100).toFixed(0)}`
+          );
+        }
+
+        for (const bp of updatedPrefs.brandPreferences.slice(-3)) {
+          insights.push(
+            `Learned: you prefer ${bp.preferred} over ${bp.rejected}`
+          );
+        }
+
+        if (updatedPrefs.alwaysInclude.length > 0) {
+          insights.push(
+            `Learned: always include ${updatedPrefs.alwaysInclude.length} staple item(s)`
+          );
+        }
+
+        if (updatedPrefs.neverSuggest.length > 0) {
+          insights.push(
+            `Learned: ${updatedPrefs.neverSuggest.length} item(s) on your never-suggest list`
+          );
+        }
+
+        send({
+          type: "learning-insights",
+          data: { insights, runCount: updatedPrefs.runCount },
+        });
 
         sendDone(send);
       } catch (err) {

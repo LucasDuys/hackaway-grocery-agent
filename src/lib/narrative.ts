@@ -249,6 +249,26 @@ export function narrateEvent(
         return narrateScheduleSlot(date, timeWindow, reasoning);
       }
     }
+
+    if (agent === "orchestrator" && action === "APPROVE" && context) {
+      const itemCount = context.itemCount as number | undefined;
+      const totalCost = context.totalCost as number | undefined;
+      const deliveryDate = context.deliveryDate as string | null | undefined;
+      const deliveryWindow = context.deliveryWindow as string | null | undefined;
+      if (itemCount != null && totalCost != null) {
+        return narrateCartFinalized(itemCount, totalCost, deliveryDate ?? null, deliveryWindow ?? null);
+      }
+    }
+
+    // Budget optimizer removal uses REJECT action with item-level details
+    if (agent === "budget-optimizer" && action === "REJECT" && context) {
+      const itemName = context.itemName as string | undefined;
+      const itemPrice = context.itemPrice as number | undefined;
+      const priority = context.priority as string | undefined;
+      if (itemName && itemPrice != null && priority) {
+        return narrateBudgetRemoval(itemName, itemPrice, priority);
+      }
+    }
   } catch {
     // If any narrative function throws, fall through to raw message
   }

@@ -5,6 +5,7 @@ import type {
   AgentName,
   AgentStatus,
   AgentEvent,
+  AgentHandoff,
   CartSummary,
   ActionType,
 } from "@/types";
@@ -122,6 +123,8 @@ export function useOrchestration() {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pipelineMode, setPipelineMode] = useState<"auto" | "custom" | null>(null);
+  const [handoffs, setHandoffs] = useState<AgentHandoff[]>([]);
+  const [learningInsights, setLearningInsights] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -136,6 +139,8 @@ export function useOrchestration() {
     setActivityLog([]);
     setCartSummary(null);
     setMealPlan([]);
+    setHandoffs([]);
+    setLearningInsights([]);
     setStreamedText("");
     setIsRunning(false);
     setError(null);
@@ -202,6 +207,8 @@ export function useOrchestration() {
     setAgentStates({ ...initialAgentStates });
     setCartSummary(null);
     setMealPlan([]);
+    setHandoffs([]);
+    setLearningInsights([]);
     setStreamedText("");
     setPipelineMode(null);
 
@@ -255,10 +262,18 @@ export function useOrchestration() {
                 agent: parsed.data.agent,
                 action: parsed.data.action,
                 message: parsed.data.message,
+                rawMessage: parsed.data.rawMessage,
                 timestamp: parsed.data.timestamp ?? Date.now(),
                 details: parsed.data.details,
               };
               setActivityLog((prev) => [...prev, agentEvent]);
+            } else if (parsed.type === "agent-handoff") {
+              const handoff: AgentHandoff = {
+                from: parsed.data.from,
+                to: parsed.data.to,
+                summary: parsed.data.summary,
+              };
+              setHandoffs((prev) => [...prev, handoff]);
             } else if (parsed.type === "mode") {
               setPipelineMode(parsed.data.mode);
             } else if (parsed.type === "meal-plan") {
@@ -267,6 +282,8 @@ export function useOrchestration() {
               setCartSummary(parsed.data);
             } else if (parsed.type === "streamed-text") {
               setStreamedText((prev) => prev + (parsed.data.text ?? ""));
+            } else if (parsed.type === "learning-insights") {
+              setLearningInsights(parsed.data?.insights ?? []);
             } else if (parsed.type === "error") {
               setError(parsed.data?.message ?? "Pipeline error");
             } else if (parsed.type === "done") {
@@ -300,6 +317,7 @@ export function useOrchestration() {
   return {
     agentStates,
     activityLog,
+    handoffs,
     cartSummary,
     mealPlan,
     streamedText,
@@ -308,6 +326,7 @@ export function useOrchestration() {
     demoMode,
     setDemoMode,
     pipelineMode,
+    learningInsights,
     orchestrate,
     reset,
   };

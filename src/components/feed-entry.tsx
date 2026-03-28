@@ -37,11 +37,16 @@ function formatTimestamp(ts: number): string {
 
 interface FeedEntryProps {
   event: AgentEvent;
+  storyMode?: boolean;
 }
 
-export function FeedEntry({ event }: FeedEntryProps) {
+export function FeedEntry({ event, storyMode = true }: FeedEntryProps) {
   const agentColor = agentColorMap[event.agent] ?? "var(--text-secondary)";
   const badge = actionBadgeColors[event.action];
+
+  const displayMessage = storyMode
+    ? event.message
+    : (event.rawMessage ?? event.message);
 
   return (
     <div className="feed-entry flex items-start gap-2 rounded-md px-3 py-2 text-sm">
@@ -66,8 +71,16 @@ export function FeedEntry({ event }: FeedEntryProps) {
         {event.action}
       </span>
 
-      {/* Message */}
-      <span className="feed-message text-[var(--text-primary)] min-w-0 break-words">{event.message}</span>
+      {/* Message -- story mode: regular weight, slightly larger; log mode: monospace */}
+      {storyMode ? (
+        <span className="feed-message min-w-0 break-words text-[var(--text-primary)]" style={{ fontSize: "0.9rem" }}>
+          {displayMessage}
+        </span>
+      ) : (
+        <span className="feed-message min-w-0 break-words font-mono text-xs text-[var(--text-primary)]">
+          {displayMessage}
+        </span>
+      )}
     </div>
   );
 }
