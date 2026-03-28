@@ -80,7 +80,7 @@ export function StepInputParse({ isActive }: StepInputParseProps) {
       transition={{ duration: 0.4 }}
     >
       <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        Step 2
+        Step 3
       </p>
       <h2 className="mb-12 text-center text-5xl font-bold text-[var(--text-primary)]">
         Input Parsing

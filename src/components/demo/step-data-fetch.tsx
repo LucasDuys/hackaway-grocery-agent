@@ -39,7 +39,7 @@ export function StepDataFetch({ isActive }: StepDataFetchProps) {
       transition={{ duration: 0.4 }}
     >
       <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        Step 3
+        Step 4
       </p>
       <h2 className="mb-16 text-center text-5xl font-bold text-[var(--text-primary)]">
         Data Fetch
