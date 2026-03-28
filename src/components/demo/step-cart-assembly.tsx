@@ -60,7 +60,7 @@ export function StepCartAssembly({ isActive }: StepCartAssemblyProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Step 6
       </p>
       <h2 className="mb-10 text-center text-5xl font-bold text-[var(--text-primary)]">
@@ -110,7 +110,7 @@ export function StepCartAssembly({ isActive }: StepCartAssemblyProps) {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-baseline justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+          <span className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             Budget
           </span>
           <div className="flex items-baseline gap-1">

@@ -10,8 +10,9 @@ import { StepAgentDAG } from "@/components/demo/step-agent-dag";
 import { StepBudgetConflict } from "@/components/demo/step-budget-conflict";
 import { StepCartAssembly } from "@/components/demo/step-cart-assembly";
 import { StepCheckout } from "@/components/demo/step-checkout";
+import { StepSummary } from "@/components/demo/step-summary";
 
-const TOTAL_STEPS = 8; // 0 = title, 1-7 = content steps
+const TOTAL_STEPS = 9; // 0 = title, 1-7 = content steps, 8 = summary
 
 function TitleSlide({ isActive }: { isActive: boolean }) {
   return (
@@ -84,6 +85,7 @@ const STEP_COMPONENTS = [
   StepBudgetConflict,
   StepCartAssembly,
   StepCheckout,
+  StepSummary,
 ];
 
 export default function DemoPage() {
@@ -108,6 +110,10 @@ export default function DemoPage() {
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         navigate("prev");
+      }
+      if (e.key === "r" || e.key === "R") {
+        e.preventDefault();
+        navigate(0);
       }
     };
     window.addEventListener("keydown", handler);

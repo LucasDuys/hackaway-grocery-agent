@@ -62,7 +62,7 @@ export function StepAnalysis({ isActive }: StepAnalysisProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Step 3
       </p>
       <h2 className="mb-4 text-center text-5xl font-bold text-[var(--text-primary)]">
@@ -82,7 +82,7 @@ export function StepAnalysis({ isActive }: StepAnalysisProps) {
             transition={{ duration: 0.5, delay: i * 0.15 }}
           >
             <h3 className="mb-1 text-xl font-bold text-[var(--text-primary)]">{insight.title}</h3>
-            <p className="mb-4 text-sm text-[var(--text-secondary)]">{insight.detail}</p>
+            <p className="mb-4 text-base text-[var(--text-secondary)]">{insight.detail}</p>
 
             {/* Bar segments */}
             {insight.barSegments && (
@@ -125,7 +125,7 @@ export function StepAnalysis({ isActive }: StepAnalysisProps) {
                 {insight.pairs.map((pair, j) => (
                   <motion.div
                     key={pair.items}
-                    className="flex items-center justify-between text-sm"
+                    className="flex items-center justify-between text-base"
                     initial={{ opacity: 0, x: -10 }}
                     animate={phase >= 1 ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
                     transition={{ duration: 0.4, delay: 0.4 + j * 0.1 }}
@@ -147,7 +147,7 @@ export function StepAnalysis({ isActive }: StepAnalysisProps) {
         animate={phase >= 2 ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <span className="text-sm font-semibold text-emerald-700">
+        <span className="text-base font-semibold text-emerald-700">
           Runs in &lt;50ms on 100 orders
         </span>
       </motion.div>

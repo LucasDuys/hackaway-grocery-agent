@@ -79,7 +79,7 @@ export function StepBudgetConflict({ isActive }: StepBudgetConflictProps) {
         transition={{ duration: 0.6 }}
       />
 
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Step 5
       </p>
       <h2 className="mb-12 text-center text-5xl font-bold text-[var(--text-primary)]">
@@ -114,7 +114,7 @@ export function StepBudgetConflict({ isActive }: StepBudgetConflictProps) {
             transition={{ duration: 0.5, delay: 0.3 }}
           >
             <div className="flex justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Budget</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">Budget</span>
               <span className="text-sm font-bold text-[var(--text-secondary)]">EUR 80.00</span>
             </div>
             <div className="relative h-4 w-full rounded-full bg-[var(--surface-muted)] overflow-hidden">
@@ -170,7 +170,7 @@ export function StepBudgetConflict({ isActive }: StepBudgetConflictProps) {
           animate={phase >= 3 ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+          <p className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
             Substitutions
           </p>
 

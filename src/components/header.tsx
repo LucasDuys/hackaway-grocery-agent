@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 interface HeaderProps {
   isTransparencyMode: boolean;
   onToggleMode: () => void;
@@ -38,6 +40,12 @@ export function Header({
         <span className="text-lg font-bold text-white">
           Weekly Shop
         </span>
+        <Link
+          href="/demo"
+          className="ml-3 rounded-md bg-white/15 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/25"
+        >
+          Demo
+        </Link>
       </div>
 
       {/* Center: Pipeline status + Mode badge + Demo toggle */}

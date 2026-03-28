@@ -79,7 +79,7 @@ export function StepInputParse({ isActive }: StepInputParseProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Step 1
       </p>
       <h2 className="mb-12 text-center text-5xl font-bold text-[var(--text-primary)]">
@@ -147,7 +147,7 @@ export function StepInputParse({ isActive }: StepInputParseProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.15 }}
               >
-                <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider" style={{ color: box.color }}>
+                <p className="mb-2 font-mono text-sm font-semibold uppercase tracking-wider" style={{ color: box.color }}>
                   {box.label}
                 </p>
                 <p className="text-lg font-bold text-[var(--text-primary)]">{box.value}</p>
