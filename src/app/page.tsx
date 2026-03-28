@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence } from "motion/react";
 import { Header } from "@/components/header";
 import { DietaryFilter } from "@/components/dietary-filter";
@@ -22,6 +22,16 @@ export default function Home() {
   const [rightTab, setRightTab] = useState<"pipeline" | "feed">("pipeline");
   const [notificationDismissed, setNotificationDismissed] = useState(false);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<DietaryRestriction[]>([]);
+  const [dataReady, setDataReady] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/prefetch")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setDataReady(true);
+      })
+      .catch(() => {});
+  }, []);
 
   const daysSinceLastOrder = useMemo(() => {
     const deliveryTimes = mockOrders.map((o) => o.delivery_time);
@@ -176,6 +186,16 @@ export default function Home() {
               selected={dietaryRestrictions}
               onChange={setDietaryRestrictions}
             />
+
+            {/* Prefetch status */}
+            {dataReady && (
+              <div className="flex items-center justify-center gap-1.5 py-1 animate-in fade-in duration-500">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  Picnic data loaded
+                </span>
+              </div>
+            )}
 
             {/* Input bar */}
             <InputBar
