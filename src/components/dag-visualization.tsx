@@ -6,138 +6,193 @@ interface DAGVisualizationProps {
   agentStates: Record<AgentName, { status: AgentStatus; message: string }>;
 }
 
-const nodes: {
+const NODE_W = 130;
+const NODE_H = 54;
+
+interface DAGNode {
   id: AgentName;
   label: string;
   color: string;
   x: number;
   y: number;
-}[] = [
-  { id: "prefetch", label: "Intent Parser", color: "var(--agent-prefetch, #94a3b8)", x: 20, y: 50 },
-  { id: "order-analyst", label: "Order Analyst", color: "var(--agent-order-analyst)", x: 160, y: 14 },
-  { id: "meal-planner", label: "Meal Planner", color: "var(--agent-meal-planner)", x: 160, y: 55 },
-  { id: "schedule-agent", label: "Schedule", color: "var(--agent-schedule)", x: 160, y: 96 },
-  { id: "orchestrator", label: "Orchestrator", color: "var(--agent-orchestrator)", x: 320, y: 55 },
-  { id: "budget-optimizer", label: "Budget Opt.", color: "var(--agent-budget)", x: 320, y: 108 },
+}
+
+/* ------------------------------------------------------------------ */
+/*  Layout: horizontal flow, 3 columns                                 */
+/*  Col 1: prefetch                                                    */
+/*  Col 2: order-analyst, meal-planner, schedule-agent (parallel)      */
+/*  Col 3: orchestrator, budget-optimizer                              */
+/* ------------------------------------------------------------------ */
+
+const MARGIN_X = 30;
+const COL_GAP = 60;
+const ROW_GAP = 16;
+
+const col1X = MARGIN_X;
+const col2X = MARGIN_X + NODE_W + COL_GAP;
+const col3X = MARGIN_X + (NODE_W + COL_GAP) * 2;
+
+const nodes: DAGNode[] = [
+  { id: "prefetch", label: "Intent Parser", color: "var(--agent-prefetch)", x: col1X, y: 72 },
+  { id: "order-analyst", label: "Order Analyst", color: "var(--agent-order-analyst)", x: col2X, y: 10 },
+  { id: "meal-planner", label: "Meal Planner", color: "var(--agent-meal-planner)", x: col2X, y: 10 + NODE_H + ROW_GAP },
+  { id: "schedule-agent", label: "Schedule Agent", color: "var(--agent-schedule)", x: col2X, y: 10 + (NODE_H + ROW_GAP) * 2 },
+  { id: "orchestrator", label: "Orchestrator", color: "var(--agent-orchestrator)", x: col3X, y: 44 },
+  { id: "budget-optimizer", label: "Budget Optimizer", color: "var(--agent-budget)", x: col3X, y: 44 + NODE_H + ROW_GAP },
 ];
 
-const NODE_W = 104;
-const NODE_H = 36;
-
-// edges: [sourceId, targetId, dashed?]
-const edges: [AgentName, AgentName, boolean][] = [
-  ["prefetch", "order-analyst", false],
-  ["prefetch", "meal-planner", false],
-  ["prefetch", "schedule-agent", false],
-  ["order-analyst", "orchestrator", false],
-  ["meal-planner", "orchestrator", false],
-  ["schedule-agent", "orchestrator", false],
-  ["orchestrator", "budget-optimizer", false],
-  ["budget-optimizer", "meal-planner", true], // feedback loop
+const edges: { src: AgentName; tgt: AgentName; feedback?: boolean }[] = [
+  { src: "prefetch", tgt: "order-analyst" },
+  { src: "prefetch", tgt: "meal-planner" },
+  { src: "prefetch", tgt: "schedule-agent" },
+  { src: "order-analyst", tgt: "orchestrator" },
+  { src: "meal-planner", tgt: "orchestrator" },
+  { src: "schedule-agent", tgt: "orchestrator" },
+  { src: "orchestrator", tgt: "budget-optimizer" },
+  { src: "budget-optimizer", tgt: "meal-planner", feedback: true },
 ];
+
+const SVG_W = col3X + NODE_W + MARGIN_X;
+const SVG_H = 10 + (NODE_H + ROW_GAP) * 3 + 30;
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
 
 function getStatusStyle(status: AgentStatus, color: string) {
   switch (status) {
     case "pending":
-      return {
-        bg: "#e5e7eb",
-        textColor: "#9ca3af",
-        border: "#d1d5db",
-      };
+      return { bg: "#f3f0ed", text: "#a89c90", border: "#e5e0da", opacity: 0.7 };
     case "running":
-      return {
-        bg: color,
-        textColor: "#ffffff",
-        border: color,
-      };
+      return { bg: color, text: "#ffffff", border: color, opacity: 1 };
     case "complete":
-      return {
-        bg: color,
-        textColor: "#ffffff",
-        border: color,
-      };
+      return { bg: color, text: "#ffffff", border: color, opacity: 1 };
     case "error":
-      return {
-        bg: "#ef4444",
-        textColor: "#ffffff",
-        border: "#dc2626",
-      };
+      return { bg: "#ef4444", text: "#ffffff", border: "#dc2626", opacity: 1 };
   }
 }
 
-function edgePath(
-  sx: number,
-  sy: number,
-  tx: number,
-  ty: number,
-  isFeedback: boolean
-): string {
-  // Source point: right edge center of source node
-  const x1 = sx + NODE_W;
-  const y1 = sy + NODE_H / 2;
-
-  if (!isFeedback) {
-    // Target point: left edge center of target node
-    const x2 = tx;
-    const y2 = ty + NODE_H / 2;
-    // Simple horizontal-then-vertical path
+function edgePath(src: DAGNode, tgt: DAGNode, feedback: boolean): string {
+  if (!feedback) {
+    const x1 = src.x + NODE_W;
+    const y1 = src.y + NODE_H / 2;
+    const x2 = tgt.x;
+    const y2 = tgt.y + NODE_H / 2;
     const mx = (x1 + x2) / 2;
     return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
   }
 
-  // Feedback loop: goes down from orchestrator, curves under, comes back to meal-planner left
-  const x2 = tx;
-  const y2 = ty + NODE_H / 2;
-  // Go down from source bottom, curve under the graph, back up to target left
-  const belowY = 145;
-  return `M ${x1} ${y1} L ${x1 + 16} ${y1} Q ${x1 + 16} ${belowY}, ${(x1 + x2) / 2} ${belowY} Q ${x2 - 16} ${belowY}, ${x2 - 16} ${y2} L ${x2} ${y2}`;
+  // Feedback loop: goes below everything and curves back
+  const x1 = tgt.x + NODE_W; // budget-optimizer right edge
+  const y1 = tgt.y + NODE_H / 2;
+  const x2 = src.x; // meal-planner left edge
+  const y2 = src.y + NODE_H / 2;
+  // Note: for the feedback edge, src=budget-optimizer, tgt=meal-planner
+  // so we draw from budget-optimizer bottom to below, then curve back left to meal-planner
+  const belowY = SVG_H - 10;
+  return `M ${x1} ${y1} L ${x1 + 20} ${y1} Q ${x1 + 20} ${belowY}, ${(x1 + x2) / 2} ${belowY} Q ${x2 - 20} ${belowY}, ${x2 - 20} ${y2} L ${x2} ${y2}`;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
 export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   return (
-    <div className="shrink-0 border-b border-[var(--border-light)] px-4 py-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+    <div className="shrink-0 border-b border-[var(--border-light)] px-4 py-4">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Agent Pipeline
       </p>
       <svg
-        viewBox="0 0 450 155"
+        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         className="w-full"
-        style={{ maxHeight: "140px" }}
+        style={{ maxHeight: "220px" }}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Edges */}
-        {edges.map(([srcId, tgtId, dashed]) => {
-          const src = nodeMap.get(srcId)!;
-          const tgt = nodeMap.get(tgtId)!;
-          const d = edgePath(src.x, src.y, tgt.x, tgt.y, dashed);
-          return (
-            <path
-              key={`${srcId}-${tgtId}`}
-              d={d}
-              fill="none"
-              stroke={dashed ? "#f59e0b" : "#d1d5db"}
-              strokeWidth={dashed ? 1.5 : 1.5}
-              strokeDasharray={dashed ? "4 3" : undefined}
-              markerEnd="url(#arrowhead)"
-            />
-          );
-        })}
-
-        {/* Arrowhead marker */}
         <defs>
+          {/* Arrowhead */}
           <marker
-            id="arrowhead"
-            markerWidth="6"
-            markerHeight="6"
-            refX="5"
-            refY="3"
+            id="dag-arrow"
+            markerWidth="8"
+            markerHeight="8"
+            refX="7"
+            refY="4"
             orient="auto"
           >
-            <polygon points="0 0, 6 3, 0 6" fill="#d1d5db" />
+            <polygon points="0 0, 8 4, 0 8" fill="#c4bdb5" />
           </marker>
+          <marker
+            id="dag-arrow-feedback"
+            markerWidth="8"
+            markerHeight="8"
+            refX="7"
+            refY="4"
+            orient="auto"
+          >
+            <polygon points="0 0, 8 4, 0 8" fill="#f59e0b" />
+          </marker>
+
+          {/* Animated dot for active edges */}
+          <circle id="flow-dot" r="3" fill="var(--agent-orchestrator)" />
         </defs>
+
+        {/* Edges */}
+        {edges.map(({ src, tgt, feedback }) => {
+          const srcNode = nodeMap.get(src)!;
+          const tgtNode = nodeMap.get(tgt)!;
+          // For feedback edge, swap since we go from budget-optimizer back to meal-planner
+          const d = feedback
+            ? edgePath(tgtNode, srcNode, true)
+            : edgePath(srcNode, tgtNode, false);
+
+          const srcStatus = agentStates[src]?.status ?? "pending";
+          const tgtStatus = agentStates[tgt]?.status ?? "pending";
+          const isActive =
+            srcStatus === "running" ||
+            srcStatus === "complete" ||
+            tgtStatus === "running";
+          const edgeId = `edge-${src}-${tgt}`;
+
+          return (
+            <g key={edgeId}>
+              <path
+                id={edgeId}
+                d={d}
+                fill="none"
+                stroke={feedback ? "#f59e0b" : isActive ? "#a89c90" : "#e5e0da"}
+                strokeWidth={feedback ? 2 : 2}
+                strokeDasharray={feedback ? "6 4" : undefined}
+                markerEnd={feedback ? "url(#dag-arrow-feedback)" : "url(#dag-arrow)"}
+                className="transition-[stroke] duration-300"
+              />
+              {/* Animated flow dot */}
+              {isActive && !feedback && (
+                <circle r="3" fill="var(--agent-orchestrator)" opacity="0.7">
+                  <animateMotion
+                    dur="2s"
+                    repeatCount="indefinite"
+                    rotate="auto"
+                  >
+                    <mpath href={`#${edgeId}`} />
+                  </animateMotion>
+                </circle>
+              )}
+              {isActive && feedback && (
+                <circle r="3" fill="#f59e0b" opacity="0.7">
+                  <animateMotion
+                    dur="3s"
+                    repeatCount="indefinite"
+                    rotate="auto"
+                  >
+                    <mpath href={`#${edgeId}`} />
+                  </animateMotion>
+                </circle>
+              )}
+            </g>
+          );
+        })}
 
         {/* Nodes */}
         {nodes.map((node) => {
@@ -148,16 +203,16 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
           const style = getStatusStyle(state.status, node.color);
 
           return (
-            <g key={node.id}>
-              {/* Pulse ring for running state */}
+            <g key={node.id} style={{ opacity: style.opacity }}>
+              {/* Pulse ring for running */}
               {state.status === "running" && (
                 <rect
-                  x={node.x - 3}
-                  y={node.y - 3}
-                  width={NODE_W + 6}
-                  height={NODE_H + 6}
-                  rx={10}
-                  ry={10}
+                  x={node.x - 4}
+                  y={node.y - 4}
+                  width={NODE_W + 8}
+                  height={NODE_H + 8}
+                  rx={14}
+                  ry={14}
                   fill="none"
                   stroke={node.color}
                   strokeWidth={2}
@@ -165,57 +220,75 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
                 />
               )}
 
-              {/* Node background */}
+              {/* Node body */}
               <rect
                 x={node.x}
                 y={node.y}
                 width={NODE_W}
                 height={NODE_H}
-                rx={8}
-                ry={8}
+                rx={12}
+                ry={12}
                 fill={style.bg}
                 stroke={style.border}
                 strokeWidth={1.5}
+                className="transition-all duration-300"
               />
 
-              {/* Label */}
+              {/* Agent label */}
               <text
                 x={node.x + NODE_W / 2}
-                y={node.y + (state.status === "complete" ? 15 : NODE_H / 2 + 1)}
+                y={node.y + (state.message ? 20 : NODE_H / 2 + 1)}
                 textAnchor="middle"
-                dominantBaseline={state.status === "complete" ? "auto" : "central"}
-                fill={style.textColor}
-                fontSize={10}
+                dominantBaseline={state.message ? "auto" : "central"}
+                fill={style.text}
+                fontSize={12}
                 fontWeight={600}
                 fontFamily="system-ui, -apple-system, sans-serif"
               >
                 {node.label}
               </text>
 
-              {/* Complete indicator */}
-              {state.status === "complete" && (
+              {/* One-line summary */}
+              {state.message && (
                 <text
                   x={node.x + NODE_W / 2}
-                  y={node.y + NODE_H - 7}
+                  y={node.y + 36}
                   textAnchor="middle"
-                  fill={style.textColor}
-                  fontSize={8}
-                  fontWeight={500}
+                  fill={style.text}
+                  fontSize={9}
+                  fontWeight={400}
                   fontFamily="system-ui, -apple-system, sans-serif"
                   opacity={0.85}
                 >
-                  Done
+                  {state.message.length > 22
+                    ? state.message.slice(0, 20) + "..."
+                    : state.message}
                 </text>
+              )}
+
+              {/* Complete check */}
+              {state.status === "complete" && (
+                <g transform={`translate(${node.x + NODE_W - 16}, ${node.y + 6})`}>
+                  <circle cx="5" cy="5" r="5" fill="rgba(255,255,255,0.3)" />
+                  <polyline
+                    points="2 5, 5 8, 9 2"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </g>
               )}
 
               {/* Error indicator */}
               {state.status === "error" && (
                 <text
-                  x={node.x + NODE_W - 10}
-                  y={node.y + 12}
+                  x={node.x + NODE_W - 12}
+                  y={node.y + 14}
                   textAnchor="middle"
                   fill="#ffffff"
-                  fontSize={10}
+                  fontSize={12}
                   fontWeight={700}
                 >
                   !
@@ -225,13 +298,27 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
           );
         })}
 
+        {/* Parallel indicator bracket */}
+        <text
+          x={col2X - 14}
+          y={10 + NODE_H + ROW_GAP + NODE_H / 2 + 1}
+          textAnchor="middle"
+          fill="var(--text-muted)"
+          fontSize={36}
+          fontWeight={200}
+          fontFamily="system-ui"
+          opacity={0.4}
+        >
+          {"{"}
+        </text>
+
         {/* Feedback label */}
         <text
-          x={240}
-          y={152}
+          x={(col2X + col3X + NODE_W) / 2}
+          y={SVG_H - 2}
           textAnchor="middle"
           fill="#f59e0b"
-          fontSize={8}
+          fontSize={10}
           fontStyle="italic"
           fontFamily="system-ui, -apple-system, sans-serif"
         >

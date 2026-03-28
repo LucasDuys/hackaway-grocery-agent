@@ -9,11 +9,13 @@ import { AgentActivityFeed } from "@/components/agent-activity-feed";
 import { InputBar } from "@/components/input-bar";
 import { StreamedText } from "@/components/streamed-text";
 import { DAGVisualization } from "@/components/dag-visualization";
+import { PipelineView } from "@/components/pipeline-view";
 import { MealPlanSummary } from "@/components/meal-plan-summary";
 import { useOrchestration } from "@/hooks/use-orchestration";
 
 export default function Home() {
   const [isTransparencyMode, setIsTransparencyMode] = useState(true);
+  const [rightTab, setRightTab] = useState<"pipeline" | "feed">("pipeline");
 
   const {
     agentStates,
@@ -141,11 +143,50 @@ export default function Home() {
         }
         rightPanel={
           <div className="flex h-full flex-col">
-            <DAGVisualization agentStates={agentStates} />
-            <AgentStatusPanel agentStates={agentStates} />
-            <div className="flex-1 overflow-hidden">
-              <AgentActivityFeed events={activityLog} />
+            {/* Tab switcher */}
+            <div className="flex shrink-0 border-b border-[var(--border-light)]">
+              <button
+                onClick={() => setRightTab("pipeline")}
+                className={`flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                  rightTab === "pipeline"
+                    ? "border-b-2 border-[var(--agent-orchestrator)] text-[var(--agent-orchestrator)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                }`}
+              >
+                How It Works
+              </button>
+              <button
+                onClick={() => setRightTab("feed")}
+                className={`flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                  rightTab === "feed"
+                    ? "border-b-2 border-[var(--agent-orchestrator)] text-[var(--agent-orchestrator)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                }`}
+              >
+                Activity Feed
+                {activityLog.length > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--surface-muted)] px-1 text-[10px] font-medium text-[var(--text-secondary)]">
+                    {activityLog.length}
+                  </span>
+                )}
+              </button>
             </div>
+
+            {rightTab === "pipeline" ? (
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <DAGVisualization agentStates={agentStates} />
+                <div className="flex-1 overflow-hidden">
+                  <PipelineView agentStates={agentStates} activityLog={activityLog} />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <AgentStatusPanel agentStates={agentStates} />
+                <div className="flex-1 overflow-hidden">
+                  <AgentActivityFeed events={activityLog} />
+                </div>
+              </div>
+            )}
           </div>
         }
       />
