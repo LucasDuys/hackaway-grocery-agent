@@ -97,6 +97,7 @@ export const parsedIntentSchema = z.object({
     z.object({
       day: z.string(),
       dish: z.string(),
+      goalBased: z.boolean().optional(),
     })
   ),
   guestEvents: z.array(
@@ -108,4 +109,5 @@ export const parsedIntentSchema = z.object({
   ),
   budget: z.number().int().nullable(), // cents, null = no explicit budget
   specialRequests: z.array(z.string()),
+  productSearchQueries: z.array(z.string()).optional(),
 });

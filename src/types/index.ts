@@ -222,10 +222,11 @@ export type DietaryRestriction =
 
 export interface ParsedIntent {
   rawInput: string;
-  meals: Array<{ day: string; dish: string }>;
+  meals: Array<{ day: string; dish: string; goalBased?: boolean }>;
   guestEvents: Array<{ day: string; guestCount: number; description: string }>;
   budget: number | null; // cents, null = no explicit budget
   specialRequests: string[];
+  productSearchQueries?: string[]; // e.g., ["chocolade", "chips"] for snack requests
   dietaryRestrictions?: DietaryRestriction[];
 }
 
