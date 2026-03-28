@@ -23,24 +23,29 @@ export function BudgetBar({ currentTotal, budget }: BudgetBarProps) {
   else if (isWarning) textColor = "text-amber-600";
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-semibold text-[var(--text-primary)]">
+    <div className="rounded-2xl bg-[var(--surface)] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
+      <div className="mb-2.5 flex items-baseline justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
           Budget
         </span>
-        <span className={`text-sm font-semibold font-mono ${textColor}`}>
-          EUR {centsToEur(currentTotal)} / EUR {centsToEur(budget)}
-        </span>
+        <div className="flex items-baseline gap-1">
+          <span className={`text-sm font-bold ${textColor}`}>
+            EUR {centsToEur(currentTotal)}
+          </span>
+          <span className="text-xs text-[var(--text-muted)]">
+            / EUR {centsToEur(budget)}
+          </span>
+        </div>
       </div>
-      <div className="h-3 w-full rounded-full bg-[var(--surface-muted)] overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-[var(--surface-muted)] overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
           style={{ width: `${pct}%` }}
         />
       </div>
       {isOver && (
-        <p className="mt-1.5 text-xs font-medium text-[var(--budget-red)]">
-          Over budget by EUR {centsToEur(currentTotal - budget)}
+        <p className="mt-2 text-xs font-medium text-[var(--budget-red)]">
+          EUR {centsToEur(currentTotal - budget)} over budget
         </p>
       )}
     </div>

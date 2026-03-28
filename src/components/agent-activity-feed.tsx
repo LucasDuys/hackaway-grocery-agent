@@ -18,8 +18,8 @@ export function AgentActivityFeed({ events }: AgentActivityFeedProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Header with count */}
-      <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-4 py-2">
-        <span className="text-sm font-semibold text-[var(--text-primary)]">
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--border-light)] px-4 py-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
           Activity Feed
         </span>
         {events.length > 0 && (

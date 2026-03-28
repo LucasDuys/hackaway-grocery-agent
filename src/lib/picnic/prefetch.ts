@@ -145,8 +145,23 @@ async function fetchAllData(
     }
   }
 
+  let orders = normalizeOrders(ordersRaw.orders ?? []);
+
+  // Fall back to mock data when the API returns no order history
+  if (orders.length === 0) {
+    try {
+      const mockData = await import("@/data/mock-orders.json");
+      orders = mockData.default as PicnicOrder[];
+      console.log(
+        `[prefetch] No API orders found. Loaded ${orders.length} mock orders.`
+      );
+    } catch {
+      console.warn("[prefetch] No mock order data available at @/data/mock-orders.json");
+    }
+  }
+
   return {
-    orders: normalizeOrders(ordersRaw.orders ?? []),
+    orders,
     favorites: normalizeProducts(favoritesRaw.favorites ?? []),
     cart: normalizeCart(cartRaw.items ?? []),
     deliverySlots: normalizeSlots(slotsRaw.delivery_slots ?? []),

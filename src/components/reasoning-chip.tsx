@@ -5,27 +5,27 @@ import type { ReasonTag, AgentName } from "@/types";
 const tagConfig: Record<ReasonTag, { label: string; className: string }> = {
   repeat: {
     label: "repeat",
-    className: "border-stone-300 text-stone-600 bg-stone-50",
+    className: "border-stone-200 text-stone-500 bg-stone-50/60",
   },
   substitution: {
-    label: "substitution",
-    className: "border-yellow-400 text-yellow-700 bg-yellow-50",
+    label: "swap",
+    className: "border-amber-200 text-amber-600 bg-amber-50/60",
   },
   recipe: {
     label: "recipe",
-    className: "border-sky-300 text-sky-700 bg-sky-50",
+    className: "border-sky-200 text-sky-600 bg-sky-50/60",
   },
   suggestion: {
-    label: "suggestion",
-    className: "border-violet-300 text-violet-700 bg-violet-50",
+    label: "idea",
+    className: "border-violet-200 text-violet-500 bg-violet-50/60",
   },
   overdue: {
     label: "overdue",
-    className: "border-orange-300 text-orange-700 bg-orange-50",
+    className: "border-orange-200 text-orange-500 bg-orange-50/60",
   },
   "co-purchase": {
-    label: "co-purchase",
-    className: "border-emerald-300 text-emerald-700 bg-emerald-50",
+    label: "goes with",
+    className: "border-emerald-200 text-emerald-500 bg-emerald-50/60",
   },
 };
 
@@ -48,7 +48,7 @@ export function ReasoningChip({ tag, agentSource }: ReasoningChipProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${config.className}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-px text-[10px] font-medium leading-tight ${config.className}`}
     >
       {agentSource && (
         <span

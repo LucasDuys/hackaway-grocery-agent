@@ -16,25 +16,39 @@ export function Header({
   onToggleDemo,
 }: HeaderProps) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-5">
+    <header className="flex h-14 shrink-0 items-center justify-between bg-[var(--picnic-red)] px-5 shadow-sm">
       {/* Left: Logo */}
-      <div className="flex items-center gap-3">
-        <span className="text-xl font-bold text-[var(--picnic-orange)]">
-          Grocery Agent
+      <div className="flex items-center gap-2.5">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="8" cy="21" r="1" />
+          <circle cx="19" cy="21" r="1" />
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+        </svg>
+        <span className="text-lg font-bold text-white">
+          Weekly Shop
         </span>
       </div>
 
       {/* Center: Pipeline status + Demo toggle */}
       <div className="flex items-center gap-3">
         {pipelineStatus && (
-          <span className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
+          <span className="flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
             <span
               className={`inline-block h-2 w-2 rounded-full ${
                 pipelineStatus === "Agents working..."
-                  ? "animate-pulse bg-amber-500"
+                  ? "animate-pulse bg-yellow-300"
                   : pipelineStatus === "Pipeline complete"
-                    ? "bg-emerald-500"
-                    : "bg-gray-400"
+                    ? "bg-green-300"
+                    : "bg-white/60"
               }`}
             />
             {pipelineStatus}
@@ -43,10 +57,10 @@ export function Header({
         {onToggleDemo && (
           <button
             onClick={onToggleDemo}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               demoMode
-                ? "border-amber-400 bg-amber-50 text-amber-700"
-                : "border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-secondary)]"
+                ? "bg-yellow-300 text-yellow-900"
+                : "bg-white/20 text-white hover:bg-white/30"
             }`}
           >
             {demoMode ? "Demo" : "Live"}
@@ -57,7 +71,7 @@ export function Header({
       {/* Right: Mode toggle */}
       <button
         onClick={onToggleMode}
-        className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
+        className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
       >
         {isTransparencyMode ? (
           <>
@@ -74,7 +88,7 @@ export function Header({
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            Transparency
+            Agent View
           </>
         ) : (
           <>
@@ -88,10 +102,11 @@ export function Header({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-              <line x1="1" y1="1" x2="23" y2="23" />
+              <circle cx="8" cy="21" r="1" />
+              <circle cx="19" cy="21" r="1" />
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
             </svg>
-            User Mode
+            Cart Only
           </>
         )}
       </button>

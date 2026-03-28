@@ -25,7 +25,7 @@ export function SplitPanelLayout({
 
       {/* Right panel */}
       <div
-        className="h-full overflow-hidden border-l border-[var(--border)] transition-all duration-300 ease-out"
+        className="h-full overflow-hidden border-l border-[var(--border-light)] bg-[var(--surface-agent)] transition-all duration-300 ease-out"
         style={{
           flex: isRightPanelVisible ? "0 0 40%" : "0 0 0%",
           opacity: isRightPanelVisible ? 1 : 0,

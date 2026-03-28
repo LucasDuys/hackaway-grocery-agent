@@ -97,7 +97,7 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   return (
-    <div className="shrink-0 border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+    <div className="shrink-0 border-b border-[var(--border-light)] px-4 py-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Agent Pipeline
       </p>

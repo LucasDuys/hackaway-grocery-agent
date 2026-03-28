@@ -97,13 +97,16 @@ export function CartView({ summary }: CartViewProps) {
           const meta = categoryMeta[cat];
           return (
             <div key={cat} className="mb-5">
-              <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-[var(--text-primary)]">
-                {meta.label}
-                <span className="text-sm font-normal text-[var(--text-muted)]">
-                  ({items.length})
+              <div className="mb-2 flex items-center gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                  {meta.label}
+                </h3>
+                <span className="text-xs text-[var(--text-muted)]">
+                  {items.length}
                 </span>
-              </h3>
-              <div className="flex flex-col gap-2">
+                <div className="flex-1 border-b border-[var(--border-light)]" />
+              </div>
+              <div className="flex flex-col gap-1.5">
                 {items.map((item) => (
                   <CartItemRow key={item.itemId} item={item} />
                 ))}
@@ -114,27 +117,30 @@ export function CartView({ summary }: CartViewProps) {
       </div>
 
       {/* Cart summary footer */}
-      <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+      <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)] px-5 py-4">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex flex-col gap-0.5">
             <span className="text-sm text-[var(--text-secondary)]">
-              {summary.items.length} items
+              {summary.items.length} items in cart
             </span>
-            {summary.substitutionCount > 0 && (
-              <span className="ml-3 text-sm text-yellow-600">
-                {summary.substitutionCount} substitution{summary.substitutionCount > 1 ? "s" : ""}
-              </span>
-            )}
-            {summary.savings > 0 && (
-              <span className="ml-3 text-sm text-[var(--budget-green)]">
-                Saved EUR {centsToEur(summary.savings)}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {summary.substitutionCount > 0 && (
+                <span className="text-xs text-amber-600">
+                  {summary.substitutionCount} swap{summary.substitutionCount > 1 ? "s" : ""}
+                </span>
+              )}
+              {summary.savings > 0 && (
+                <span className="text-xs text-[var(--budget-green)] font-medium">
+                  EUR {centsToEur(summary.savings)} saved
+                </span>
+              )}
+            </div>
           </div>
           <div className="text-right">
-            <span className="text-xl font-bold font-mono text-[var(--text-primary)]">
+            <span className="text-xs text-[var(--text-muted)]">Total</span>
+            <p className="text-xl font-bold text-[var(--text-primary)]">
               EUR {centsToEur(summary.totalCost)}
-            </span>
+            </p>
           </div>
         </div>
       </div>

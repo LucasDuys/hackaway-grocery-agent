@@ -32,10 +32,33 @@ function makeSend(
   controller: ReadableStreamDefaultController,
   encoder: TextEncoder
 ): SSESend {
-  return (data: unknown) => {
-    controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+  let isClosed = false;
+
+  const send = (data: unknown) => {
+    if (isClosed) return;
+    try {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+    } catch {
+      // Controller may have been closed by the client disconnecting
+      isClosed = true;
+    }
   };
+
+  // Attach a close helper so callers can safely close the controller
+  (send as SSESendWithClose).close = () => {
+    if (isClosed) return;
+    isClosed = true;
+    try {
+      controller.close();
+    } catch {
+      // Already closed -- ignore
+    }
+  };
+
+  return send;
 }
+
+type SSESendWithClose = SSESend & { close: () => void };
 
 function sendAgentStatus(
   send: SSESend,
@@ -100,11 +123,15 @@ export async function POST(req: Request) {
   }
 
   // Check for required env vars
-  if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+  if (
+    !process.env.OPENAI_API_KEY &&
+    !process.env.OPENROUTER_API_KEY &&
+    !process.env.ANTHROPIC_API_KEY
+  ) {
     return new Response(
       JSON.stringify({
         error:
-          "Missing API key. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in your environment.",
+          "Missing API key. Set OPENAI_API_KEY, OPENROUTER_API_KEY, or ANTHROPIC_API_KEY in your environment.",
       }),
       {
         status: 500,
@@ -392,12 +419,14 @@ export async function POST(req: Request) {
         sendDone(send);
       } catch (err) {
         console.error("Orchestration pipeline error:", err);
+        // Attempt to send the error event -- send() is safe if controller is already closed
         sendError(
           send,
           err instanceof Error ? err.message : "Unknown error occurred"
         );
       } finally {
-        controller.close();
+        // Use the safe close helper to avoid "Controller is already closed" errors
+        (send as SSESendWithClose).close();
       }
     },
   });

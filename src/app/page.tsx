@@ -84,29 +84,29 @@ export default function Home() {
               {cartSummary ? (
                 <CartView summary={cartSummary} />
               ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-                  <div className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+                <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
+                  <div className="rounded-full bg-[var(--picnic-red-light)] p-5">
                     <svg
-                      width="32"
-                      height="32"
+                      width="36"
+                      height="36"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="text-[var(--text-muted)]"
+                      className="text-[var(--picnic-red)]"
                     >
                       <circle cx="8" cy="21" r="1" />
                       <circle cx="19" cy="21" r="1" />
                       <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-[var(--text-secondary)]">
+                  <p className="text-base font-semibold text-[var(--text-primary)]">
                     Your cart is empty
                   </p>
-                  <p className="max-w-xs text-xs text-[var(--text-muted)]">
-                    Describe your week below and the agents will build a smart grocery cart for you.
+                  <p className="max-w-xs text-sm text-[var(--text-muted)]">
+                    Tell us about your week and we will put together a smart grocery list for you.
                   </p>
                 </div>
               )}

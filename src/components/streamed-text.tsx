@@ -61,11 +61,11 @@ export function StreamedText({ text, isRunning }: StreamedTextProps) {
   const displayed = text.slice(0, displayedLength);
 
   return (
-    <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3">
+    <div className="shrink-0 border-t border-[var(--border-light)] bg-[var(--picnic-red-light)] px-4 py-3">
       <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
         {displayed}
         {displayedLength < text.length && (
-          <span className="inline-block h-4 w-0.5 animate-pulse bg-[var(--text-muted)] align-text-bottom" />
+          <span className="inline-block h-4 w-0.5 animate-pulse bg-[var(--picnic-red)] align-text-bottom" />
         )}
       </p>
     </div>
