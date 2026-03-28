@@ -64,13 +64,15 @@ export interface RawDeliverySlotsResponse {
 
 /** Shape returned by hackathon-search-products */
 export interface RawSearchProductsResponse {
-  products?: Array<{
-    selling_unit_id: string;
+  query?: string;
+  results?: Array<{
+    id: string;
     name: string;
     price: number;
     image_url?: string;
     unit_quantity?: string;
   }>;
+  total?: number;
 }
 
 /** Shape returned by hackathon-search-recipes */

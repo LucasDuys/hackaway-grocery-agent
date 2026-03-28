@@ -153,7 +153,15 @@ async function fetchAllData(
 
       if (type === "products") {
         const raw = data as RawSearchProductsResponse;
-        searchResults[query] = normalizeProducts(raw.products ?? []);
+        // API returns { results: [{ id, name, price, ... }] } not { products: [...] }
+        const products = (raw.results ?? []).map(p => ({
+          selling_unit_id: p.id,
+          name: p.name,
+          price: p.price,
+          image_url: p.image_url,
+          unit_quantity: p.unit_quantity,
+        }));
+        searchResults[query] = normalizeProducts(products);
       } else {
         const raw = data as RawSearchRecipesResponse;
         recipes.push(...normalizeRecipes(raw.recipes ?? []));

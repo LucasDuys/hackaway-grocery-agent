@@ -35,12 +35,42 @@
       "preferred": "Picnic varkensgehaktballetjes",
       "rejected": "vegan gehakt",
       "learnedAt": "2026-03-28T13:39:59.985Z"
+    },
+    {
+      "category": "Removed Campina Botergoud ongezouten roomboter, which is tagged as 'occasional' and not a weekly staple. Since the cart is heavily over budget and this item is a premium butter (EUR 3.79 per unit), it's the first candidate for removal to protect essential items. Savings: EUR 3.79 per unit (EUR 7.58 for 2 units).",
+      "preferred": "Campina Botergoud ongezouten roomboter (REMOVED)",
+      "rejected": "Campina Botergoud ongezouten roomboter",
+      "learnedAt": "2026-03-28T14:26:54.996Z"
+    },
+    {
+      "category": "Removed D&L mayonaise met eieren (priority: regular), because after all other removals, the cart is still over budget and all remaining alternatives are staples that cannot be touched. Removing this item saves EUR 3.29 per unit (EUR 6.58 for 2 units). The user has previously purchased mayonnaise, but it is not a staple or explicitly requested for this week.",
+      "preferred": "D&L mayonaise met eieren (REMOVED)",
+      "rejected": "D&L mayonaise met eieren",
+      "learnedAt": "2026-03-28T14:26:54.996Z"
+    },
+    {
+      "category": "Removed Picnic barista opschuimmelk houdbaar. This is a 'regular' item, but with the cart substantially over budget after other removals and since it is not marked as 'staple,' it can be dropped to meet the budget. Savings: EUR 1.99 per unit (EUR 3.98 for 2 units).",
+      "preferred": "Picnic barista opschuimmelk houdbaar (REMOVED)",
+      "rejected": "Picnic barista opschuimmelk houdbaar",
+      "learnedAt": "2026-03-28T14:26:54.996Z"
+    },
+    {
+      "category": "Removed Haust maiswafels kaas (regular purchase) to meet budget. This snack item is not essential like main ingredients and can be left out this week. Savings: EUR 1.99.",
+      "preferred": "Haust maiswafels kaas (REMOVED)",
+      "rejected": "Haust maiswafels kaas",
+      "learnedAt": "2026-03-28T14:27:33.595Z"
+    },
+    {
+      "category": "Swapped La Molisana Fusilli n° 28 (EUR 2.39) for Picnic bio fusilli volkoren (EUR 1.29). Both are whole wheat fusilli, the store brand offers similar quality for daily pasta dishes, saving EUR 1.10 per pack.",
+      "preferred": "Picnic bio fusilli volkoren",
+      "rejected": "La Molisana Fusilli n° 28",
+      "learnedAt": "2026-03-28T14:27:33.595Z"
     }
   ],
   "budgetPatterns": {
-    "averageBudget": 9390,
+    "averageBudget": 8384,
     "lastStatedBudget": 10000,
-    "typicalSpend": 5515
+    "typicalSpend": 2850
   },
   "deliveryPreferences": {
     "preferredDay": "Monday",
@@ -51,6 +81,6 @@
   ],
   "neverSuggest": [],
   "alwaysInclude": [],
-  "runCount": 9,
-  "lastRunAt": "2026-03-28T13:48:30.694Z"
+  "runCount": 19,
+  "lastRunAt": "2026-03-28T14:35:22.543Z"
 }
