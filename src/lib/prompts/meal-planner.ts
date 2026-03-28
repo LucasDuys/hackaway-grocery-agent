@@ -22,6 +22,47 @@ The user has the following dietary restrictions: ${intent.dietaryRestrictions.jo
 `;
 }
 
+function buildGoalBasedBlock(intent: ParsedIntent): string {
+  const goalMeals = intent.meals.filter((m) => m.goalBased);
+  if (goalMeals.length === 0) return "";
+
+  return `<goal_based_meal_planning>
+Some or all meals are goal-based rather than specific dishes. For goal-based meals:
+1. FIRST: Check the available_recipes list for recipes that match the goal. Picnic recipes have dietary tags and descriptions. If a recipe matches (e.g., "Kip tandoori" for high protein), use that recipe and its verified ingredients.
+2. SECOND: If no recipe matches, build a custom meal from the product_catalog. Select 3-5 products that together form a coherent meal matching the goal.
+3. EVERY ingredient MUST use a selling_unit_id from the available_recipes or product_catalog above. If you cannot find a matching product, DO NOT include that ingredient.
+
+Goal interpretation:
+- "high protein" -> prioritize: kipfilet, gehakt, vis, ei, zuivel, bonen
+- "low carb" -> prioritize: groente, vlees, vis, noten. Avoid: pasta, rijst, brood, aardappel
+- "healthy" -> prioritize: groente, fruit, vis, volkoren producten
+- "vegetarian" -> exclude: vlees, vis, kip
+- "easy" / "quick" -> prioritize: kant-en-klaar maaltijden, magnetron, verspakketten
+
+CRITICAL: Do NOT invent products. Every itemId MUST exist in the data above.
+If you cannot find enough products for a meal, reduce the meal to what IS available.
+Better to have 3 real items than 8 imaginary ones.
+</goal_based_meal_planning>
+
+`;
+}
+
+function buildNutritionalTargetsBlock(intent: ParsedIntent): string {
+  const nutritionalKeywords = ["protein", "carb", "calorie", "kcal", "macro", "gram eiwit", "koolhydraat"];
+  const nutritionalRequests = intent.specialRequests.filter((req) =>
+    nutritionalKeywords.some((kw) => req.toLowerCase().includes(kw))
+  );
+  if (nutritionalRequests.length === 0) return "";
+
+  return `<nutritional_targets>
+The user has nutritional targets: ${nutritionalRequests.join(", ")}
+When available, use products with nutritional data to estimate if the meal meets these targets.
+If exact nutritional data is not available, make reasonable estimates based on the food type.
+</nutritional_targets>
+
+`;
+}
+
 export function buildMealPlannerPrompt(
   intent: ParsedIntent,
   recipes: PicnicRecipe[],
@@ -30,6 +71,8 @@ export function buildMealPlannerPrompt(
   preferencesContext?: string
 ): string {
   const dietaryBlock = buildDietaryBlock(intent);
+  const goalBasedBlock = buildGoalBasedBlock(intent);
+  const nutritionalBlock = buildNutritionalTargetsBlock(intent);
 
   return `${getSoulBlock()}<identity>
 You are the Meal Planner, a specialized agent in a grocery orchestration system.
@@ -43,7 +86,7 @@ Your role is to plan meals for the week based on the user's requests, map them t
 <base_cart>${JSON.stringify(baseCart.map((c) => ({ id: c.selling_unit_id, name: c.name, quantity: c.quantity })), null, 2)}</base_cart>
 </context>
 
-${dietaryBlock}${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
+${dietaryBlock}${goalBasedBlock}${nutritionalBlock}${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
 CRITICAL RULE: When an available_recipe matches the user's requested meal, you MUST use that recipe's exact ingredients with their real selling_unit_ids. Do NOT invent or fabricate product IDs. The recipe ingredients already have correct selling_unit_id values that map to real Picnic products. Only fall back to the product_catalog for ingredients when NO matching recipe exists.
 
 1. For each meal the user requested (see user_intent.meals), FIRST check available_recipes for a matching recipe. If a recipe matches (even partially by name), use its ingredients directly -- they have verified selling_unit_ids.
@@ -60,12 +103,18 @@ CRITICAL RULE: When an available_recipe matches the user's requested meal, you M
 
 GUARDRAILS -- strict rules, violations will be rejected:
 - ONLY use selling_unit_ids that appear in the recipes or product_catalog data above.
-- Every itemId MUST start with "s" followed by digits (e.g. "s1181327"), or be "UNKNOWN" if no match found.
+- Every itemId MUST start with "s" followed by digits (e.g. "s1181327"), or be "SKIP" if no match found.
 - ONLY use prices from the data. NEVER guess prices. If price is unknown, set to 0.
 - Each meal MUST have at least 2 ingredients.
 - estimatedCost MUST equal the sum of (price * quantity) for all ingredients, in cents.
 - Do NOT generate more than 5 meals total.
 - Ingredient quantities must be realistic (1-6 per item).
+
+ABSOLUTE RULE: You MUST ONLY use selling_unit_ids that appear in the available_recipes or product_catalog data provided above.
+- Scan the data for each ingredient BEFORE including it.
+- If a selling_unit_id is not in the data, DO NOT use it. Set itemId to "SKIP" and price to 0.
+- Items with "SKIP" IDs will be automatically removed from the cart.
+- It is better to suggest fewer ingredients with real IDs than more ingredients with fake IDs.
 </instructions>
 
 <output_schema>

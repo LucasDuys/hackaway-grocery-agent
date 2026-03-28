@@ -241,10 +241,40 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------------
         sendAgentStatus(send, "prefetch", "running", "Fetching Picnic data...");
 
-        // Gather search queries from intent (meal dishes + special requests)
+        // Gather search queries from intent (meal dishes + special requests + product searches)
+        // For goal-based meals, add Dutch search terms that map to the goal
+        const goalSearchTermMap: Record<string, string[]> = {
+          "high protein": ["kipfilet", "ei", "tonijn", "yoghurt", "gehakt", "kaas"],
+          "low carb": ["groente", "vlees", "vis", "ei", "noten"],
+          "healthy": ["salade", "groente", "fruit", "vis"],
+          "easy": ["kant-en-klaar", "maaltijd", "magnetron"],
+          "quick": ["kant-en-klaar", "maaltijd", "magnetron"],
+        };
+
+        const goalSearchQueries: string[] = [];
+        for (const meal of intent.meals) {
+          if (meal.goalBased) {
+            const dishLower = meal.dish.toLowerCase();
+            let matched = false;
+            for (const [goal, terms] of Object.entries(goalSearchTermMap)) {
+              if (dishLower.includes(goal)) {
+                goalSearchQueries.push(...terms);
+                matched = true;
+                break;
+              }
+            }
+            if (!matched) {
+              // Generic/unknown goal
+              goalSearchQueries.push("maaltijd", "avondeten", "recept");
+            }
+          }
+        }
+
         const searchQueries = [
           ...intent.meals.map((m) => m.dish),
           ...intent.specialRequests,
+          ...(intent.productSearchQueries ?? []),
+          ...goalSearchQueries,
         ].filter(Boolean);
 
         const t0Prefetch = Date.now();
@@ -397,6 +427,53 @@ export async function POST(req: Request) {
           meal.estimatedCost = realCost;
         }
 
+        // Filter out SKIP items (zero-hallucination guardrail)
+        for (const meal of mealResult.meals) {
+          meal.ingredients = meal.ingredients.filter(
+            (ing) => ing.itemId !== "SKIP" && ing.itemId !== "UNKNOWN"
+          );
+          meal.estimatedCost = meal.ingredients.reduce(
+            (sum, ing) => sum + ing.price * ing.quantity,
+            0
+          );
+        }
+
+        // Handle productSearchQueries as direct cart additions
+        // These bypass the meal planner -- they're direct product additions (e.g., snacks)
+        const snackSuggestions: CartItem[] = [];
+        if (intent.productSearchQueries && intent.productSearchQueries.length > 0) {
+          for (const query of intent.productSearchQueries) {
+            // First check prefetched search results
+            const prefetchedResults = data.searchResults[query];
+            if (prefetchedResults && prefetchedResults.length > 0) {
+              const topResults = prefetchedResults.slice(0, 3);
+              for (const product of topResults) {
+                snackSuggestions.push({
+                  itemId: product.selling_unit_id,
+                  name: product.name,
+                  quantity: 1,
+                  price: product.price,
+                  imageUrl: product.image_url,
+                  reasonTag: "suggestion",
+                  reasoning: `Suggested for "${query}"`,
+                  agentSource: "orchestrator",
+                  diffStatus: "added",
+                });
+              }
+            }
+          }
+
+          if (snackSuggestions.length > 0) {
+            sendAgentEvent(
+              send,
+              "orchestrator",
+              "SUGGEST",
+              `Added ${snackSuggestions.length} product suggestion(s) for: ${intent.productSearchQueries.join(", ")}`,
+              { queries: intent.productSearchQueries, count: snackSuggestions.length }
+            );
+          }
+        }
+
         // Build a map from recipe name to recipe image for meal cards
         const recipeImageMap = new Map<string, string>();
         for (const recipe of data.recipes) {
@@ -515,6 +592,23 @@ export async function POST(req: Request) {
         // Step 5: Merge results, correct prices from catalog, calculate total
         // ---------------------------------------------------------------
         const mergedItems = mergeCartItems(orderResult, mealResult, data);
+
+        // Filter out SKIP/UNKNOWN items (zero-hallucination guardrail)
+        for (let i = mergedItems.length - 1; i >= 0; i--) {
+          if (mergedItems[i].itemId === "SKIP" || mergedItems[i].itemId === "UNKNOWN") {
+            mergedItems.splice(i, 1);
+          }
+        }
+
+        // Add snack/product search suggestions to the merged cart
+        for (const snack of snackSuggestions) {
+          const existing = mergedItems.find((m) => m.itemId === snack.itemId);
+          if (existing) {
+            existing.quantity += snack.quantity;
+          } else {
+            mergedItems.push(snack);
+          }
+        }
 
         // Correct prices and set images: use real catalog data instead of LLM-hallucinated values
         for (const item of mergedItems) {
