@@ -242,16 +242,24 @@ function normalizeRecipes(
   return raw.map((r) => {
     // Extract primary image hash from recipe images array
     const primaryImage = r.images?.images?.find((img) => img.primary) ?? r.images?.images?.[0];
+
+    // The API returns ingredients with selling_unit_quantity (not quantity)
+    // and selling_unit_id can be null (e.g. cupboard items like salt).
+    // User-defined recipes return ingredients as null entirely.
+    const ingredients = (r.ingredients ?? [])
+      .filter((i) => i.selling_unit_id) // skip items without a product mapping
+      .map((i) => ({
+        selling_unit_id: i.selling_unit_id as string,
+        name: i.name,
+        quantity: i.selling_unit_quantity,
+      }));
+
     return {
       id: r.id,
       name: r.name,
       portions: r.portions,
       imageUrl: primaryImage?.id,
-      ingredients: r.ingredients.map((i) => ({
-        selling_unit_id: i.selling_unit_id,
-        name: i.name,
-        quantity: i.quantity,
-      })),
+      ingredients,
     };
   });
 }

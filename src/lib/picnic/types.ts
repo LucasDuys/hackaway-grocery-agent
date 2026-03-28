@@ -87,10 +87,14 @@ export interface RawSearchRecipesResponse {
         primary?: boolean;
       }>;
     };
-    ingredients: Array<{
-      selling_unit_id: string;
+    ingredients?: Array<{
+      ingredient_id: string;
+      ingredient_type?: string;
       name: string;
-      quantity: number;
-    }>;
+      selling_unit_id?: string | null;
+      selling_unit_quantity: number;
+      order?: number;
+      availability_status?: string;
+    }> | null;
   }>;
 }
