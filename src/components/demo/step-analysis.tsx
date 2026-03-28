@@ -21,7 +21,7 @@ const insights = [
   {
     title: "Average weekly spend: EUR 201",
     detail: "100 orders analyzed in <50ms",
-    sparkline: [180, 195, 210, 201, 190, 205, 220, 195, 201, 207],
+    sparkline: [65, 72, 80, 75, 68, 78, 85, 70, 76, 80],
   },
   {
     title: "Dietary filtering",
@@ -109,9 +109,15 @@ export function StepAnalysis({ isActive }: StepAnalysisProps) {
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  points={insight.sparkline
-                    .map((v, idx) => `${idx * (200 / (insight.sparkline!.length - 1))},${48 - ((v - 50) / 50) * 48}`)
-                    .join(" ")}
+                  points={(() => {
+                    const vals = insight.sparkline!;
+                    const min = Math.min(...vals);
+                    const max = Math.max(...vals);
+                    const range = max - min || 1;
+                    return vals
+                      .map((v, idx) => `${idx * (200 / (vals.length - 1))},${44 - ((v - min) / range) * 40 + 2}`)
+                      .join(" ");
+                  })()}
                   initial={{ pathLength: 0 }}
                   animate={phase >= 1 ? { pathLength: 1 } : { pathLength: 0 }}
                   transition={{ duration: 1, delay: 0.4 }}
