@@ -80,7 +80,7 @@ export function StepBudgetConflict({ isActive }: StepBudgetConflictProps) {
       />
 
       <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        Step 5
+        Step 6
       </p>
       <h2 className="mb-12 text-center text-5xl font-bold text-[var(--text-primary)]">
         Budget Conflict

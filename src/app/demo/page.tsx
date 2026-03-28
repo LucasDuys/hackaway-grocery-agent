@@ -6,13 +6,14 @@ import { StepIndicator } from "@/components/demo/step-indicator";
 import { StepInputParse } from "@/components/demo/step-input-parse";
 import { StepDataFetch } from "@/components/demo/step-data-fetch";
 import { StepAnalysis } from "@/components/demo/step-analysis";
+import { StepRecipes } from "@/components/demo/step-recipes";
 import { StepAgentDAG } from "@/components/demo/step-agent-dag";
 import { StepBudgetConflict } from "@/components/demo/step-budget-conflict";
 import { StepCartAssembly } from "@/components/demo/step-cart-assembly";
 import { StepCheckout } from "@/components/demo/step-checkout";
 import { StepSummary } from "@/components/demo/step-summary";
 
-const TOTAL_STEPS = 9; // 0 = title, 1-7 = content steps, 8 = summary
+const TOTAL_STEPS = 10; // 0 = title, 1-8 = content steps, 9 = summary
 
 function TitleSlide({ isActive }: { isActive: boolean }) {
   return (
@@ -81,6 +82,7 @@ const STEP_COMPONENTS = [
   StepInputParse,
   StepDataFetch,
   StepAnalysis,
+  StepRecipes,
   StepAgentDAG,
   StepBudgetConflict,
   StepCartAssembly,
