@@ -1,4 +1,5 @@
 import type { AnalysisResult, PicnicData } from "@/types";
+import { getSoulBlock } from "./soul";
 
 export function buildOrderAnalystPrompt(
   analysis: AnalysisResult,
@@ -10,8 +11,7 @@ export function buildOrderAnalystPrompt(
     items: o.items.map((i) => `${i.name} x${i.quantity}`).join(", "),
   }));
 
-  return `
-<identity>
+  return `${getSoulBlock()}<identity>
 You are the Order Analyst, a specialized agent in a grocery orchestration system.
 Your role is to recommend grocery items based on a customer's purchase history patterns.
 You reason about behavioral evidence -- not raw statistics.

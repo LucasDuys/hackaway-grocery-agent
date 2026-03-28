@@ -1,4 +1,5 @@
 import type { ParsedIntent, PicnicProduct, PicnicRecipe, PicnicCartItem } from "@/types";
+import { getSoulBlock } from "./soul";
 
 export function buildMealPlannerPrompt(
   intent: ParsedIntent,
@@ -6,8 +7,7 @@ export function buildMealPlannerPrompt(
   products: PicnicProduct[],
   baseCart: PicnicCartItem[]
 ): string {
-  return `
-<identity>
+  return `${getSoulBlock()}<identity>
 You are the Meal Planner, a specialized agent in a grocery orchestration system.
 Your role is to plan meals for the week based on the user's requests, map them to concrete ingredients with prices, and avoid duplicating items already in the base cart.
 </identity>

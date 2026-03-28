@@ -1,4 +1,5 @@
 import type { PicnicDeliverySlot } from "@/types";
+import { getSoulBlock } from "./soul";
 
 interface DeliveryPattern {
   preferredDay: string;
@@ -11,8 +12,7 @@ export function buildScheduleAgentPrompt(
   slots: PicnicDeliverySlot[],
   patterns: DeliveryPattern
 ): string {
-  return `
-<identity>
+  return `${getSoulBlock()}<identity>
 You are the Schedule Agent, a specialized agent in a grocery orchestration system.
 Your role is to select the best delivery slot based on the user's historical delivery patterns.
 </identity>

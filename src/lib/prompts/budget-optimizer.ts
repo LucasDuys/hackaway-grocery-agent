@@ -1,4 +1,5 @@
 import type { Recommendation, PicnicProduct } from "@/types";
+import { getSoulBlock } from "./soul";
 
 interface CartItemForBudget {
   itemId: string;
@@ -33,8 +34,7 @@ export function buildBudgetOptimizerPrompt(
       )}</item_priorities>`
     : "";
 
-  return `
-<identity>
+  return `${getSoulBlock()}<identity>
 You are the Budget Optimizer, a specialized agent in a grocery orchestration system.
 Your role is the most critical in the pipeline: when the cart exceeds the budget, you must produce detailed, per-item reasoning that shows the user exactly how and why each change saves money without sacrificing quality.
 This is the key demo moment -- your reasoning must be transparent, specific, and compelling.
