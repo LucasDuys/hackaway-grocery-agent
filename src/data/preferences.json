@@ -68,9 +68,9 @@
     }
   ],
   "budgetPatterns": {
-    "averageBudget": 8232,
+    "averageBudget": 8278,
     "lastStatedBudget": 10000,
-    "typicalSpend": 10723
+    "typicalSpend": 9243
   },
   "deliveryPreferences": {
     "preferredDay": "Monday",
@@ -81,6 +81,6 @@
   ],
   "neverSuggest": [],
   "alwaysInclude": [],
-  "runCount": 21,
-  "lastRunAt": "2026-03-28T14:37:53.049Z"
+  "runCount": 22,
+  "lastRunAt": "2026-03-28T14:39:45.551Z"
 }
