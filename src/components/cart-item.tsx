@@ -12,6 +12,7 @@ import {
 
 interface CartItemProps {
   item: CartItemType;
+  onRemove?: (itemId: string) => void;
 }
 
 const diffStyles: Record<string, string> = {
@@ -25,7 +26,7 @@ function centsToEur(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-export function CartItemRow({ item }: CartItemProps) {
+export function CartItemRow({ item, onRemove }: CartItemProps) {
   const diffClass = item.diffStatus ? diffStyles[item.diffStatus] : "";
   const isRemoved = item.diffStatus === "removed";
   const [isExpanded, setIsExpanded] = useState(false);
@@ -175,6 +176,19 @@ export function CartItemRow({ item }: CartItemProps) {
           >
             EUR {centsToEur((item.price ?? 0) * (item.quantity ?? 1))}
           </span>
+
+          {/* Remove button */}
+          {onRemove && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove(item.itemId); }}
+              className="ml-1 shrink-0 rounded-full p-1 text-[var(--text-muted)] hover:bg-red-50 hover:text-red-500 transition-colors"
+              title="Remove item"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Expandable detail section with smooth animation */}

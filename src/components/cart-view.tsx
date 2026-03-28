@@ -7,6 +7,7 @@ import { BudgetBar } from "./budget-bar";
 interface CartViewProps {
   summary: CartSummary;
   isRunning?: boolean;
+  onRemoveItem?: (itemId: string) => void;
 }
 
 type Category = "produce" | "dairy" | "proteins" | "bakery" | "drinks" | "pantry" | "frozen" | "snacks" | "other";
@@ -80,7 +81,7 @@ function centsToEur(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-export function CartView({ summary, isRunning = false }: CartViewProps) {
+export function CartView({ summary, isRunning = false, onRemoveItem }: CartViewProps) {
   const grouped = new Map<Category, CartItem[]>();
   for (const cat of categoryOrder) {
     grouped.set(cat, []);
@@ -116,7 +117,7 @@ export function CartView({ summary, isRunning = false }: CartViewProps) {
               </div>
               <div className="flex flex-col gap-1.5">
                 {items.map((item, idx) => (
-                  <CartItemRow key={`${item.itemId}-${idx}`} item={item} />
+                  <CartItemRow key={`${item.itemId}-${idx}`} item={item} onRemove={onRemoveItem} />
                 ))}
               </div>
             </div>

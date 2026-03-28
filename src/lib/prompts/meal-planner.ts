@@ -30,7 +30,7 @@ function buildGoalBasedBlock(intent: ParsedIntent): string {
 Some or all meals are goal-based rather than specific dishes. For goal-based meals:
 1. FIRST: Check the available_recipes list for recipes that match the goal. Picnic recipes have dietary tags and descriptions. If a recipe matches (e.g., "Kip tandoori" for high protein), use that recipe and its verified ingredients.
 2. SECOND: If no recipe matches, build a custom meal from the product_catalog. Select 3-5 products that together form a coherent meal matching the goal.
-3. EVERY ingredient MUST use a selling_unit_id from the available_recipes or product_catalog above. If you cannot find a matching product, DO NOT include that ingredient.
+3. PREFER selling_unit_ids from the available_recipes or product_catalog above. If you cannot find a matching product, use itemId "LOOKUP" and set the price to 0 -- it will be resolved via live search.
 
 Goal interpretation:
 - "high protein" -> prioritize: kipfilet, gehakt, vis, ei, zuivel, bonen
@@ -39,9 +39,9 @@ Goal interpretation:
 - "vegetarian" -> exclude: vlees, vis, kip
 - "easy" / "quick" -> prioritize: kant-en-klaar maaltijden, magnetron, verspakketten
 
-CRITICAL: Do NOT invent products. Every itemId MUST exist in the data above.
-If you cannot find enough products for a meal, reduce the meal to what IS available.
-Better to have 3 real items than 8 imaginary ones.
+CRITICAL: Do NOT invent selling_unit_ids. Use a real ID from the data, or "LOOKUP".
+If you cannot find a product in the data, use itemId "LOOKUP" with price 0.
+Always suggest complete meals -- do not drop ingredients just because they are missing from the catalog.
 </goal_based_meal_planning>
 
 `;
@@ -97,24 +97,22 @@ CRITICAL RULE: When an available_recipe matches the user's requested meal, you M
 6. Cross-reference each ingredient against the base_cart. If an ingredient is already in the base cart with sufficient quantity, do NOT include it in the meal's ingredients list -- the user already has it.
 7. If guestEvents are present, scale portion sizes accordingly. For example, if the user normally cooks for 2 but has 4 guests on Saturday, Saturday's meal should serve 6.
 8. Calculate estimatedCost per meal as the sum of (price * quantity) for ingredients NOT already in the base cart, in cents.
-9. If an ingredient cannot be found in the product catalog AND has no selling_unit_id from a recipe, include it with itemId "UNKNOWN", price 0, and note the missing product. NEVER invent a selling_unit_id.
+9. If an ingredient cannot be found in the product catalog AND has no selling_unit_id from a recipe, include it with itemId "LOOKUP", price 0. It will be resolved via a live product search. NEVER invent a selling_unit_id.
 10. List any additional ingredients needed beyond what recipes specify as additionalIngredients (e.g. cooking oil, salt, spices that recipes assume you have).
 11. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
 
-GUARDRAILS -- strict rules, violations will be rejected:
-- ONLY use selling_unit_ids that appear in the recipes or product_catalog data above.
-- Every itemId MUST start with "s" followed by digits (e.g. "s1181327"), or be "SKIP" if no match found.
-- ONLY use prices from the data. NEVER guess prices. If price is unknown, set to 0.
+GUARDRAILS:
+- PREFER selling_unit_ids from the available_recipes and product_catalog above.
+- If a recipe from available_recipes matches the user's request, use its ingredients with the recipe's selling_unit_ids -- these are verified.
+- For ingredients NOT found in the data, use itemId "LOOKUP" and set the price to 0. These will be resolved via a live product search.
+- Do NOT invent selling_unit_ids. Use either a real ID from the data, or "LOOKUP".
+- ALWAYS suggest at least one meal per requested day. Do NOT return empty meals.
+- Every ingredient MUST have a name, even if the itemId is "LOOKUP".
+- Quantities must be realistic (1-6 per item).
 - Each meal MUST have at least 2 ingredients.
 - estimatedCost MUST equal the sum of (price * quantity) for all ingredients, in cents.
 - Do NOT generate more than 5 meals total.
-- Ingredient quantities must be realistic (1-6 per item).
-
-ABSOLUTE RULE: You MUST ONLY use selling_unit_ids that appear in the available_recipes or product_catalog data provided above.
-- Scan the data for each ingredient BEFORE including it.
-- If a selling_unit_id is not in the data, DO NOT use it. Set itemId to "SKIP" and price to 0.
-- Items with "SKIP" IDs will be automatically removed from the cart.
-- It is better to suggest fewer ingredients with real IDs than more ingredients with fake IDs.
+- ONLY use prices from the data. NEVER guess prices. If price is unknown, set to 0.
 </instructions>
 
 <output_schema>

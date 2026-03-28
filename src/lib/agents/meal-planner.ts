@@ -41,6 +41,8 @@ export async function runMealPlanner(
       })),
     ];
 
+    console.log("Recipes available for meal planner:", data.recipes.length);
+
     const result = await generateObject({
       model: getModel("meal-planner"),
       schema: mealPlannerSchema,

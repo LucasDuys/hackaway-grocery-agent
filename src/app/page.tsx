@@ -58,6 +58,7 @@ export default function Home() {
     learningInsights,
     totalDuration,
     orchestrate,
+    removeItem,
     reset,
   } = useOrchestration();
 
@@ -138,7 +139,7 @@ export default function Home() {
                     <PersonaIndicator persona={persona} />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <CartView summary={cartSummary} isRunning={isRunning} />
+                    <CartView summary={cartSummary} isRunning={isRunning} onRemoveItem={removeItem} />
                   </div>
                 </div>
               ) : (

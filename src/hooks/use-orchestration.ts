@@ -151,6 +151,22 @@ export function useOrchestration() {
     setPipelineMode(null);
   }, []);
 
+  const removeItem = useCallback((itemId: string) => {
+    setCartSummary((prev) => {
+      if (!prev) return prev;
+      const filtered = prev.items.filter((item) => item.itemId !== itemId);
+      const newTotal = filtered.reduce(
+        (sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 1),
+        0
+      );
+      return {
+        ...prev,
+        items: filtered,
+        totalCost: newTotal,
+      };
+    });
+  }, []);
+
   const runDemo = useCallback((input: string) => {
     setIsRunning(true);
     setError(null);
@@ -337,6 +353,7 @@ export function useOrchestration() {
     learningInsights,
     totalDuration,
     orchestrate,
+    removeItem,
     reset,
   };
 }

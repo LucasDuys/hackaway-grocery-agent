@@ -429,7 +429,7 @@ export async function POST(req: Request) {
           meal.estimatedCost = realCost;
         }
 
-        // Filter out SKIP items (zero-hallucination guardrail)
+        // Filter out SKIP items, but keep LOOKUP items (they'll be resolved by live search)
         for (const meal of mealResult.meals) {
           meal.ingredients = meal.ingredients.filter(
             (ing) => ing.itemId !== "SKIP" && ing.itemId !== "UNKNOWN"
@@ -595,7 +595,7 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------------
         const mergedItems = mergeCartItems(orderResult, mealResult, data);
 
-        // Filter out SKIP/UNKNOWN items (zero-hallucination guardrail)
+        // Filter out SKIP items, but keep LOOKUP items (they'll be resolved by live search)
         for (let i = mergedItems.length - 1; i >= 0; i--) {
           if (mergedItems[i].itemId === "SKIP" || mergedItems[i].itemId === "UNKNOWN") {
             mergedItems.splice(i, 1);
@@ -667,7 +667,7 @@ export async function POST(req: Request) {
         const { PicnicClient } = await import("@/lib/picnic/client");
         const liveClient = new PicnicClient();
 
-        const fallbackItems = mergedItems.filter(item => item.price === 299 || item.price <= 0);
+        const fallbackItems = mergedItems.filter(item => item.itemId === "LOOKUP" || item.price === 299 || item.price <= 0);
         if (fallbackItems.length > 0) {
           await liveClient.authenticate();
           for (const item of fallbackItems) {
