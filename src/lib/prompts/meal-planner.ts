@@ -5,7 +5,8 @@ export function buildMealPlannerPrompt(
   intent: ParsedIntent,
   recipes: PicnicRecipe[],
   products: PicnicProduct[],
-  baseCart: PicnicCartItem[]
+  baseCart: PicnicCartItem[],
+  preferencesContext?: string
 ): string {
   return `${getSoulBlock()}<identity>
 You are the Meal Planner, a specialized agent in a grocery orchestration system.
@@ -19,7 +20,7 @@ Your role is to plan meals for the week based on the user's requests, map them t
 <base_cart>${JSON.stringify(baseCart.map((c) => ({ id: c.selling_unit_id, name: c.name, quantity: c.quantity })), null, 2)}</base_cart>
 </context>
 
-<instructions>
+${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
 CRITICAL RULE: When an available_recipe matches the user's requested meal, you MUST use that recipe's exact ingredients with their real selling_unit_ids. Do NOT invent or fabricate product IDs. The recipe ingredients already have correct selling_unit_id values that map to real Picnic products. Only fall back to the product_catalog for ingredients when NO matching recipe exists.
 
 1. For each meal the user requested (see user_intent.meals), FIRST check available_recipes for a matching recipe. If a recipe matches (even partially by name), use its ingredients directly -- they have verified selling_unit_ids.

@@ -4,7 +4,8 @@ import { getSoulBlock } from "./soul";
 export function buildOrderAnalystPrompt(
   analysis: AnalysisResult,
   data: PicnicData,
-  budgetCents?: number | null
+  budgetCents?: number | null,
+  preferencesContext?: string
 ): string {
   const recentOrders = data.orders.slice(0, 5).map((o) => ({
     date: new Date(o.delivery_time).toISOString().slice(0, 10),
@@ -24,7 +25,7 @@ You reason about behavioral evidence -- not raw statistics.
 <current_cart>${JSON.stringify(data.cart.map((c) => ({ id: c.selling_unit_id, name: c.name, quantity: c.quantity })), null, 2)}</current_cart>
 </context>
 
-<instructions>
+${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
 1. Review the pre-computed analysis (classifications, recommendations, co-purchase rules, budget, household estimate).
 2. Select the most relevant items to recommend for this week's order.
 3. For each recommended item, write a human-readable "reason" field using behavioral evidence language:

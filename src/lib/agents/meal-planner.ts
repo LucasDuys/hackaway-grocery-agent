@@ -20,7 +20,8 @@ import type {
 export async function runMealPlanner(
   intent: ParsedIntent,
   data: PicnicData,
-  baseCart: OrderAnalystOutput
+  baseCart: OrderAnalystOutput,
+  preferencesContext?: string
 ): Promise<MealPlannerOutput> {
   try {
     // Flatten all available products from search results for the product catalog
@@ -47,7 +48,8 @@ export async function runMealPlanner(
         intent,
         data.recipes,
         allProducts,
-        baseCartItems
+        baseCartItems,
+        preferencesContext
       ),
       prompt:
         "Plan meals for the week based on the user's requests. Map ingredients to concrete products, avoid duplicates with the base cart, and adjust portions for any guest events.",
