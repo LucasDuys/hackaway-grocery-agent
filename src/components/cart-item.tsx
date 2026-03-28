@@ -94,7 +94,7 @@ export function CartItemRow({ item }: CartItemProps) {
         </div>
 
         {/* Name + reasoning */}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <p
             className={`text-sm font-medium text-[var(--text-primary)] truncate ${
               isRemoved ? "line-through" : ""
@@ -120,13 +120,13 @@ export function CartItemRow({ item }: CartItemProps) {
 
         {/* Price -- right aligned */}
         <span
-          className={`ml-2 shrink-0 text-sm tabular-nums whitespace-nowrap min-w-[70px] text-right ${
+          className={`ml-2 shrink-0 text-sm tabular-nums whitespace-nowrap min-w-[70px] text-right bg-transparent ${
             isRemoved
               ? "text-[var(--text-muted)] line-through"
               : "text-[var(--text-primary)]"
           }`}
         >
-          EUR {centsToEur(item.price * item.quantity)}
+          EUR {centsToEur((item.price ?? 0) * (item.quantity ?? 1))}
         </span>
       </div>
     </div>

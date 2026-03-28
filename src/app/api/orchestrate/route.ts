@@ -304,6 +304,25 @@ export async function POST(req: Request) {
           }
         }
 
+        // For items stuck at the EUR 2.99 fallback, try fuzzy name matching
+        // against the product catalog to find real prices
+        for (const item of mergedItems) {
+          if (item.price === 299) {
+            const nameWords = item.name.toLowerCase().split(/\s+/);
+            const match = (productCatalog as Array<{ selling_unit_id: string; name: string; price: number; image_url?: string }>).find(p => {
+              const pName = p.name.toLowerCase();
+              return nameWords.some((w: string) => w.length > 3 && pName.includes(w));
+            });
+            if (match) {
+              item.price = match.price;
+              item.itemId = match.selling_unit_id;
+              if (match.image_url) {
+                item.imageUrl = match.image_url;
+              }
+            }
+          }
+        }
+
         let totalCost = mergedItems.reduce(
           (sum, item) => sum + item.price * item.quantity,
           0
@@ -365,6 +384,11 @@ export async function POST(req: Request) {
               alternatives,
               itemPriorities
             );
+
+            // Cap adjustments to MAX 3 swaps regardless of what the LLM returned
+            if (budgetOptimizerResult.adjustments.length > 3) {
+              budgetOptimizerResult.adjustments = budgetOptimizerResult.adjustments.slice(0, 3);
+            }
 
             // Send events for each adjustment
             for (const adj of budgetOptimizerResult.adjustments) {
@@ -581,9 +605,15 @@ function mergeCartItems(
   }
 
   // Deduplicate by name: LLM might use different IDs for the same product
+  // Normalize aggressively: lowercase, trim, collapse whitespace, remove diacritics
   const nameMap = new Map<string, CartItem>();
   for (const item of itemMap.values()) {
-    const normalized = item.name.toLowerCase().trim();
+    const normalized = item.name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // strip diacritics
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, " ");
     const existing = nameMap.get(normalized);
     if (existing) {
       existing.quantity += item.quantity;
