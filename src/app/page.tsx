@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { AnimatePresence } from "motion/react";
 import { Header } from "@/components/header";
 import { SplitPanelLayout } from "@/components/split-panel-layout";
 import { CartView } from "@/components/cart-view";
@@ -10,11 +11,21 @@ import { InputBar } from "@/components/input-bar";
 import { DAGVisualization } from "@/components/dag-visualization";
 import { PipelineView } from "@/components/pipeline-view";
 import { MealPlanSummary } from "@/components/meal-plan-summary";
+import { ProactiveNotification } from "@/components/proactive-notification";
 import { useOrchestration } from "@/hooks/use-orchestration";
+import mockOrders from "@/data/mock-orders.json";
 
 export default function Home() {
   const [isTransparencyMode, setIsTransparencyMode] = useState(true);
   const [rightTab, setRightTab] = useState<"pipeline" | "feed">("pipeline");
+  const [notificationDismissed, setNotificationDismissed] = useState(false);
+
+  const daysSinceLastOrder = useMemo(() => {
+    const deliveryTimes = mockOrders.map((o) => o.delivery_time);
+    const mostRecent = Math.max(...deliveryTimes);
+    const diffMs = Date.now() - mostRecent;
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  }, []);
 
   const {
     agentStates,
@@ -69,6 +80,18 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col bg-[var(--background)]">
+      <AnimatePresence>
+        {!notificationDismissed && daysSinceLastOrder >= 7 && (
+          <ProactiveNotification
+            daysSinceLastOrder={daysSinceLastOrder}
+            onDismiss={() => setNotificationDismissed(true)}
+            onAction={() => {
+              setNotificationDismissed(true);
+              orchestrate("Sort this week's shop");
+            }}
+          />
+        )}
+      </AnimatePresence>
       <Header
         isTransparencyMode={isTransparencyMode}
         onToggleMode={() => setIsTransparencyMode((prev) => !prev)}
