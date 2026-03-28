@@ -84,8 +84,8 @@ export function CartView({ summary }: CartViewProps) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Budget bar */}
-      <div className="shrink-0 px-4 pt-4">
+      {/* Budget bar -- sticky on mobile */}
+      <div className="budget-bar-sticky shrink-0 px-4 pt-4 pb-1">
         <BudgetBar currentTotal={summary.totalCost} budget={summary.budget} />
       </div>
 

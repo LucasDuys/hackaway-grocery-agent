@@ -22,7 +22,7 @@ export function InputBar({ onSubmit, isRunning, onReset, showReset }: InputBarPr
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex shrink-0 items-center gap-2 border-t border-[var(--border-light)] bg-[var(--surface)] px-4 py-3"
+      className="input-bar-mobile flex shrink-0 items-center gap-2 border-t border-[var(--border-light)] bg-[var(--surface)] px-4 py-3"
     >
       <input
         type="text"
