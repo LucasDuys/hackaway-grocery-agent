@@ -207,3 +207,27 @@ export interface ParsedIntent {
   budget: number | null; // cents, null = no explicit budget
   specialRequests: string[];
 }
+
+// === Preference Memory Types ===
+
+export interface Preferences {
+  brandPreferences: Array<{
+    category: string;
+    preferred: string; // product name/brand the user kept
+    rejected: string; // product name/brand that was swapped away
+    learnedAt: string; // ISO date
+  }>;
+  budgetPatterns: {
+    averageBudget: number; // cents
+    lastStatedBudget: number | null; // cents
+    typicalSpend: number; // cents
+  };
+  deliveryPreferences: {
+    preferredDay: string | null; // e.g. "Monday"
+    preferredTimeWindow: string | null; // e.g. "18:00 - 21:00"
+  };
+  neverSuggest: string[]; // item IDs the user removed
+  alwaysInclude: string[]; // item IDs confirmed as staples
+  runCount: number;
+  lastRunAt: string; // ISO date
+}

@@ -1,0 +1,9 @@
+{
+  "brandPreferences": [],
+  "budgetPatterns": { "averageBudget": 0, "lastStatedBudget": null, "typicalSpend": 0 },
+  "deliveryPreferences": { "preferredDay": null, "preferredTimeWindow": null },
+  "neverSuggest": [],
+  "alwaysInclude": [],
+  "runCount": 0,
+  "lastRunAt": ""
+}
