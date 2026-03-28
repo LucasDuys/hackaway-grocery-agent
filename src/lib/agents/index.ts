@@ -1,5 +1,6 @@
 export { runOrderAnalyst } from "./order-analyst";
 export { runMealPlanner } from "./meal-planner";
+export { runBudgetOptimizer } from "./budget-optimizer";
 export { runScheduleAgent } from "./schedule-agent";
 export { parseIntent } from "./intent-parser";
 export {
