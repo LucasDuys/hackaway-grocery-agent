@@ -6,6 +6,7 @@ import { BudgetBar } from "./budget-bar";
 
 interface CartViewProps {
   summary: CartSummary;
+  isRunning?: boolean;
 }
 
 type Category = "produce" | "dairy" | "proteins" | "pantry" | "other";
@@ -72,7 +73,7 @@ function centsToEur(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-export function CartView({ summary }: CartViewProps) {
+export function CartView({ summary, isRunning = false }: CartViewProps) {
   const grouped = new Map<Category, CartItem[]>();
   for (const cat of categoryOrder) {
     grouped.set(cat, []);
@@ -86,7 +87,7 @@ export function CartView({ summary }: CartViewProps) {
     <div className="flex h-full flex-col">
       {/* Budget bar -- sticky on mobile */}
       <div className="budget-bar-sticky shrink-0 px-4 pt-4 pb-1">
-        <BudgetBar currentTotal={summary.totalCost} budget={summary.budget} />
+        <BudgetBar currentTotal={summary.totalCost} budget={summary.budget} isComplete={!isRunning} />
       </div>
 
       {/* Scrollable cart list */}
@@ -121,23 +122,20 @@ export function CartView({ summary }: CartViewProps) {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
             <span className="text-sm text-[var(--text-secondary)]">
-              {summary.items.length} items in cart
-            </span>
-            <div className="flex items-center gap-3">
+              {summary.items.length} item{summary.items.length !== 1 ? "s" : ""}
               {summary.substitutionCount > 0 && (
-                <span className="text-xs text-amber-600">
-                  {summary.substitutionCount} swap{summary.substitutionCount > 1 ? "s" : ""}
+                <span className="text-[var(--text-muted)]">
+                  {" "} / {summary.substitutionCount} swap{summary.substitutionCount > 1 ? "s" : ""}
                 </span>
               )}
-              {summary.savings > 0 && (
-                <span className="text-xs text-[var(--budget-green)] font-medium">
-                  EUR {centsToEur(summary.savings)} saved
-                </span>
-              )}
-            </div>
+            </span>
+            {summary.savings > 0 && (
+              <span className="text-xs font-medium" style={{ color: "#16A34A" }}>
+                EUR {centsToEur(summary.savings)} saved
+              </span>
+            )}
           </div>
           <div className="text-right">
-            <span className="text-xs text-[var(--text-muted)]">Total</span>
             <p className="text-xl font-bold text-[var(--text-primary)]">
               EUR {centsToEur(summary.totalCost)}
             </p>

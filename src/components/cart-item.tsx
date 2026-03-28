@@ -66,13 +66,13 @@ export function CartItemRow({ item }: CartItemProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Product image -- uses medium size for mobile clarity */}
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-muted)] text-sm text-[var(--text-muted)] overflow-hidden md:h-12 md:w-12">
+        {/* Product image */}
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-muted)] text-sm text-[var(--text-muted)] overflow-hidden">
           {item.imageUrl ? (
             <img
               src={getPicnicImageUrl(item.imageUrl, "medium") || item.imageUrl}
               alt={item.name}
-              className="h-14 w-14 rounded-xl object-cover md:h-12 md:w-12"
+              className="h-12 w-12 rounded-lg object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = "none";
@@ -115,9 +115,9 @@ export function CartItemRow({ item }: CartItemProps) {
           )}
         </div>
 
-        {/* Price -- right aligned, prominent */}
+        {/* Price -- right aligned */}
         <span
-          className={`text-sm font-bold tabular-nums text-right whitespace-nowrap ${
+          className={`ml-2 shrink-0 text-sm tabular-nums text-right whitespace-nowrap ${
             isRemoved
               ? "text-[var(--text-muted)] line-through"
               : "text-[var(--text-primary)]"

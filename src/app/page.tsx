@@ -7,7 +7,6 @@ import { CartView } from "@/components/cart-view";
 import { AgentStatusPanel } from "@/components/agent-status-panel";
 import { AgentActivityFeed } from "@/components/agent-activity-feed";
 import { InputBar } from "@/components/input-bar";
-import { StreamedText } from "@/components/streamed-text";
 import { DAGVisualization } from "@/components/dag-visualization";
 import { PipelineView } from "@/components/pipeline-view";
 import { MealPlanSummary } from "@/components/meal-plan-summary";
@@ -21,7 +20,6 @@ export default function Home() {
     agentStates,
     activityLog,
     cartSummary,
-    streamedText,
     isRunning,
     error,
     demoMode,
@@ -84,7 +82,7 @@ export default function Home() {
             )}
             <div className="flex-1 overflow-hidden">
               {cartSummary ? (
-                <CartView summary={cartSummary} />
+                <CartView summary={cartSummary} isRunning={isRunning} />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
                   <div className="rounded-full bg-[var(--picnic-red-light)] p-5">
@@ -105,17 +103,23 @@ export default function Home() {
                     </svg>
                   </div>
                   <p className="text-base font-semibold text-[var(--text-primary)]">
-                    Your cart is empty
+                    Tell us about your week
                   </p>
                   <p className="max-w-xs text-sm text-[var(--text-muted)]">
-                    Tell us about your week and we will put together a smart grocery list for you.
+                    Describe your plans and we will put together a smart grocery list for you.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Streamed explanation text */}
-            <StreamedText text={streamedText} isRunning={isRunning} />
+            {/* Delivery info */}
+            {cartSummary?.deliverySlot && !isRunning && (
+              <div className="shrink-0 border-t border-[var(--border-light)] bg-[var(--surface-muted)] px-4 py-2.5">
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Delivery: {cartSummary.deliverySlot.timeWindow} — {cartSummary.deliverySlot.date}
+                </p>
+              </div>
+            )}
 
             {/* Input bar */}
             <InputBar

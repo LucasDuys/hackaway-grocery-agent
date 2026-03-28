@@ -3,16 +3,37 @@
 interface BudgetBarProps {
   currentTotal: number; // cents
   budget: number; // cents
+  isComplete: boolean; // only show final state after pipeline completes
 }
 
 function centsToEur(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-export function BudgetBar({ currentTotal, budget }: BudgetBarProps) {
+export function BudgetBar({ currentTotal, budget, isComplete }: BudgetBarProps) {
+  // During pipeline, show a neutral "calculating" state
+  if (!isComplete) {
+    return (
+      <div className="rounded-2xl bg-[var(--surface)] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
+        <div className="mb-2.5 flex items-baseline justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            Budget
+          </span>
+          <span className="text-xs text-[var(--text-muted)]">
+            Calculating...
+          </span>
+        </div>
+        <div className="h-2 w-full rounded-full bg-[var(--surface-muted)] overflow-hidden">
+          <div className="h-full w-1/3 rounded-full bg-[var(--text-muted)] opacity-30 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   const pct = budget > 0 ? Math.min((currentTotal / budget) * 100, 100) : 0;
   const isOver = currentTotal > budget;
   const isWarning = pct >= 80 && !isOver;
+  const underBudget = !isOver && budget > 0;
 
   let barColor = "bg-[var(--budget-green)]";
   if (isOver) barColor = "bg-[var(--budget-red)]";
@@ -46,6 +67,11 @@ export function BudgetBar({ currentTotal, budget }: BudgetBarProps) {
       {isOver && (
         <p className="mt-2 text-xs font-medium text-[var(--budget-red)]">
           EUR {centsToEur(currentTotal - budget)} over budget
+        </p>
+      )}
+      {underBudget && (
+        <p className="mt-2 text-xs font-medium text-[var(--budget-green)]">
+          EUR {centsToEur(budget - currentTotal)} under budget
         </p>
       )}
     </div>
