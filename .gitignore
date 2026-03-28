@@ -7,3 +7,20 @@ Thumbs.db
 .vscode/
 *.swp
 *~
+
+# Secrets
+.env
+.env.local
+.env.production
+
+# Next.js
+.next/
+out/
+node_modules/
+
+# Build
+*.tsbuildinfo
+next-env.d.ts
+
+# Misc
+npm-debug.log*

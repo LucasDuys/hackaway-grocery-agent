@@ -1,0 +1,12 @@
+{
+  "repos": [
+    {
+      "name": "hackaway",
+      "path": "C:/dev/hackaway",
+      "type": "primary"
+    }
+  ],
+  "depth": "standard",
+  "auto_detect_depth": false,
+  "cross_repo_rules": []
+}
