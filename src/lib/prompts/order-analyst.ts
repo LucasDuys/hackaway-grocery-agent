@@ -35,6 +35,15 @@ You reason about behavioral evidence -- not raw statistics.
 6. Calculate totalEstimatedCost as the sum of (price * suggestedQuantity) for all recommended items, in cents.
 7. Write a short householdInsight string summarizing the household pattern (e.g. "Appears to be a couple with a weekly shop averaging EUR 65").
 8. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
+
+GUARDRAILS -- strict rules, violations will be rejected:
+- ONLY use itemId values that appear in the analysis_result or recent_orders above. NEVER invent a selling_unit_id.
+- ONLY use prices from the data above. NEVER guess or round prices.
+- Every itemId MUST start with "s" followed by digits (e.g. "s1132274").
+- If you cannot find a real selling_unit_id for an item, DO NOT include it.
+- suggestedQuantity must be between 1 and 10.
+- pricePerUnit must match the price shown in the data for that item.
+
 9. BUDGET AWARENESS: ${budgetCents ? `The user has a budget of EUR ${(budgetCents / 100).toFixed(2)}. Keep your recommendations well UNDER this budget (aim for 50-60% of budget) because the Meal Planner will add recipe ingredients on top. Prefer cheaper variants of products when available. Do NOT recommend expensive specialty items (e.g. premium coffee beans at EUR 30+) when the budget is tight.` : 'No explicit budget set. Recommend based on the household\'s average weekly spend.'}
 10. When the budget is tight, recommend FEWER items (10-15 essential staples) rather than a full 25-item cart that will need heavy optimization later.
 </instructions>

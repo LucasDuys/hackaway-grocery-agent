@@ -91,6 +91,15 @@ Your optimizedTotal MUST be at or below the budget. If substitution alone cannot
 4. Set approved: false if any adjustments were needed (the cart was modified).
 5. Report originalTotal and optimizedTotal in cents. The optimizedTotal MUST be at or below budget_target_cents.
 6. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
+
+GUARDRAILS -- strict rules, violations will be rejected:
+- optimizedTotal MUST be less than or equal to budget_target_cents. No exceptions.
+- Maximum 3 substitutions. After 3, only removals are allowed.
+- Replacement itemIds MUST come from the alternatives list above. NEVER invent IDs.
+- Every itemId MUST start with "s" followed by digits.
+- savings = original.price - replacement.price (must be positive for substitutions).
+- For removals: set replacement to { itemId: "REMOVED", name: "removed", price: 0 }.
+- NEVER substitute or remove items tagged as "recipe" or "repeat".
 </instructions>
 
 <output_schema>

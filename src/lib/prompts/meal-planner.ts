@@ -33,6 +33,15 @@ CRITICAL RULE: When an available_recipe matches the user's requested meal, you M
 9. If an ingredient cannot be found in the product catalog AND has no selling_unit_id from a recipe, include it with itemId "UNKNOWN", price 0, and note the missing product. NEVER invent a selling_unit_id.
 10. List any additional ingredients needed beyond what recipes specify as additionalIngredients (e.g. cooking oil, salt, spices that recipes assume you have).
 11. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
+
+GUARDRAILS -- strict rules, violations will be rejected:
+- ONLY use selling_unit_ids that appear in the recipes or product_catalog data above.
+- Every itemId MUST start with "s" followed by digits (e.g. "s1181327"), or be "UNKNOWN" if no match found.
+- ONLY use prices from the data. NEVER guess prices. If price is unknown, set to 0.
+- Each meal MUST have at least 2 ingredients.
+- estimatedCost MUST equal the sum of (price * quantity) for all ingredients, in cents.
+- Do NOT generate more than 5 meals total.
+- Ingredient quantities must be realistic (1-6 per item).
 </instructions>
 
 <output_schema>
