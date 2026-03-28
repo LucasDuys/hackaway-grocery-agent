@@ -54,10 +54,12 @@ export function CartItemRow({ item }: CartItemProps) {
 
   return (
     <div className="cart-item-swipeable rounded-xl">
-      {/* Delete background (revealed on swipe) */}
-      <div className="cart-item-delete-bg">
-        Remove
-      </div>
+      {/* Delete background (revealed on swipe, hidden by default) */}
+      {swipeX < 0 && (
+        <div className="cart-item-delete-bg" style={{ display: "flex" }}>
+          Remove
+        </div>
+      )}
 
       {/* Foreground content */}
       <div

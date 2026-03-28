@@ -181,13 +181,14 @@ body {
   right: 0;
   bottom: 0;
   width: 80px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   background: var(--budget-red);
   color: white;
   font-size: 12px;
   font-weight: 600;
+  border-radius: 0 0.75rem 0.75rem 0;
   border-radius: 12px;
 }
 

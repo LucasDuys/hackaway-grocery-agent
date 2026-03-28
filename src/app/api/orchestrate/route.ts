@@ -445,7 +445,16 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------------
         // Step 6: Conditional budget optimizer
         // ---------------------------------------------------------------
-        if (totalCost > budget) {
+        if (totalCost <= budget) {
+          // Under budget -- skip optimizer
+          sendAgentEvent(
+            send,
+            "budget-optimizer",
+            "APPROVE",
+            `Cart ${centsToEur(totalCost)} is within budget ${centsToEur(budget)} -- no optimization needed`
+          );
+          sendAgentStatus(send, "budget-optimizer", "complete", "Within budget");
+        } else if (totalCost > budget) {
           const overage = totalCost - budget;
 
           sendAgentStatus(
