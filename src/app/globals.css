@@ -24,3 +24,19 @@ body {
   color: var(--text-primary);
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+/* Feed entry slide-up animation */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feed-entry {
+  animation: slide-up 0.25s ease-out both;
+}

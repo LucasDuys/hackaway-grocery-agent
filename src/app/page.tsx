@@ -5,6 +5,9 @@ import type { CartSummary } from "@/types";
 import { Header } from "@/components/header";
 import { SplitPanelLayout } from "@/components/split-panel-layout";
 import { CartView } from "@/components/cart-view";
+import { AgentStatusPanel } from "@/components/agent-status-panel";
+import { AgentActivityFeed } from "@/components/agent-activity-feed";
+import { useOrchestration } from "@/hooks/use-orchestration";
 
 const mockCartSummary: CartSummary = {
   items: [
@@ -154,26 +157,102 @@ const mockCartSummary: CartSummary = {
 
 export default function Home() {
   const [isTransparencyMode, setIsTransparencyMode] = useState(true);
+  const [inputValue, setInputValue] = useState("");
+
+  const {
+    agentStates,
+    activityLog,
+    cartSummary,
+    streamedText,
+    isRunning,
+    error,
+    orchestrate,
+    reset,
+  } = useOrchestration();
+
+  const displayCart = cartSummary ?? mockCartSummary;
+
+  const pipelineStatus = isRunning
+    ? "Agents working..."
+    : cartSummary
+      ? "Pipeline complete"
+      : "Ready";
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = inputValue.trim();
+    if (!trimmed || isRunning) return;
+    orchestrate(trimmed);
+  }
 
   return (
     <div className="flex h-screen flex-col bg-[var(--background)]">
       <Header
         isTransparencyMode={isTransparencyMode}
         onToggleMode={() => setIsTransparencyMode((prev) => !prev)}
-        pipelineStatus="Pipeline complete"
+        pipelineStatus={pipelineStatus}
       />
       <SplitPanelLayout
         isRightPanelVisible={isTransparencyMode}
-        leftPanel={<CartView summary={mockCartSummary} />}
+        leftPanel={
+          <div className="flex h-full flex-col">
+            <div className="flex-1 overflow-hidden">
+              <CartView summary={displayCart} />
+            </div>
+
+            {/* Streamed explanation text */}
+            {streamedText && (
+              <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3">
+                <p className="text-sm text-[var(--text-secondary)]">
+                  {streamedText}
+                </p>
+              </div>
+            )}
+
+            {/* Input bar */}
+            <form
+              onSubmit={handleSubmit}
+              className="flex shrink-0 items-center gap-2 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-3"
+            >
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Tell me about your week (e.g. 'Pasta Monday, guests Friday, keep it under 60 euros')"
+                disabled={isRunning}
+                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--picnic-orange)] focus:outline-none disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isRunning || !inputValue.trim()}
+                className="rounded-lg bg-[var(--picnic-orange)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50"
+              >
+                {isRunning ? "Running..." : "Go"}
+              </button>
+              {(cartSummary || activityLog.length > 0) && !isRunning && (
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-muted)]"
+                >
+                  Reset
+                </button>
+              )}
+            </form>
+
+            {/* Error display */}
+            {error && (
+              <div className="shrink-0 border-t border-red-200 bg-red-50 px-4 py-2">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+          </div>
+        }
         rightPanel={
-          <div className="flex h-full items-center justify-center p-8 text-center">
-            <div>
-              <p className="text-lg font-semibold text-[var(--text-secondary)]">
-                Agent Reasoning Feed
-              </p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Will be implemented in T006
-              </p>
+          <div className="flex h-full flex-col">
+            <AgentStatusPanel agentStates={agentStates} />
+            <div className="flex-1 overflow-hidden">
+              <AgentActivityFeed events={activityLog} />
             </div>
           </div>
         }
