@@ -236,31 +236,39 @@ function StepCard({
   const statusConfig = {
     pending: {
       label: "PENDING",
-      bg: "bg-gray-100",
-      text: "text-gray-500",
-      border: "border-gray-200",
+      pillBg: "bg-gray-50",
+      pillText: "text-gray-500",
       dot: "bg-gray-300",
+      leftBorder: "border-l-gray-300",
+      numberBg: "bg-gray-100",
+      numberText: "text-gray-400",
     },
     running: {
       label: "RUNNING",
-      bg: "bg-blue-50",
-      text: "text-blue-600",
-      border: "border-blue-200",
+      pillBg: "bg-blue-50",
+      pillText: "text-blue-600",
       dot: "bg-blue-500 animate-pulse",
+      leftBorder: "border-l-blue-500",
+      numberBg: "bg-blue-50",
+      numberText: "text-blue-600",
     },
     complete: {
       label: "COMPLETE",
-      bg: "bg-green-50",
-      text: "text-green-700",
-      border: "border-green-200",
+      pillBg: "bg-green-50",
+      pillText: "text-green-700",
       dot: "bg-green-500",
+      leftBorder: "border-l-green-500",
+      numberBg: "bg-green-50",
+      numberText: "text-green-700",
     },
     error: {
       label: "ERROR",
-      bg: "bg-red-50",
-      text: "text-red-600",
-      border: "border-red-200",
+      pillBg: "bg-red-50",
+      pillText: "text-red-600",
       dot: "bg-red-500",
+      leftBorder: "border-l-red-500",
+      numberBg: "bg-red-50",
+      numberText: "text-red-600",
     },
   };
 
@@ -269,9 +277,11 @@ function StepCard({
   return (
     <div
       className={`
-        rounded-xl border transition-all duration-300
-        ${status === "pending" ? "border-[var(--border-light)] bg-[var(--surface-muted)] opacity-60" : "border-[var(--border)] bg-white shadow-sm"}
-        ${status === "running" ? "ring-1 ring-blue-200" : ""}
+        rounded-xl border border-[var(--border)] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]
+        border-l-4 ${cfg.leftBorder}
+        transition-all duration-300
+        ${status === "pending" ? "opacity-60" : ""}
+        ${status === "running" ? "pipeline-card-pulse" : ""}
       `}
     >
       {/* Header */}
@@ -282,11 +292,8 @@ function StepCard({
         {/* Step number */}
         <div
           className={`
-            flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold
-            ${status === "complete" ? "bg-[var(--agent-orchestrator)] text-white" : ""}
-            ${status === "running" ? "bg-blue-100 text-blue-700" : ""}
-            ${status === "pending" ? "bg-gray-100 text-gray-400" : ""}
-            ${status === "error" ? "bg-red-100 text-red-600" : ""}
+            flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold
+            ${cfg.numberBg} ${cfg.numberText}
           `}
         >
           {step.number}
@@ -299,7 +306,7 @@ function StepCard({
               {step.title}
             </h3>
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${cfg.bg} ${cfg.text}`}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${cfg.pillBg} ${cfg.pillText}`}
             >
               <span className={`inline-block h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
               {cfg.label}

@@ -62,7 +62,7 @@ const SVG_H = 10 + (NODE_H + ROW_GAP) * 3 + 30;
 function getStatusStyle(status: AgentStatus, color: string) {
   switch (status) {
     case "pending":
-      return { bg: "#f3f0ed", text: "#a89c90", border: "#e5e0da", opacity: 0.7 };
+      return { bg: "#f7f5f2", text: "#8a7e72", border: "#ddd8d2", opacity: 0.6 };
     case "running":
       return { bg: color, text: "#ffffff", border: color, opacity: 1 };
     case "complete":
@@ -162,8 +162,8 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
                 d={d}
                 fill="none"
                 stroke={feedback ? "#f59e0b" : isActive ? "#a89c90" : "#e5e0da"}
-                strokeWidth={feedback ? 2 : 2}
-                strokeDasharray={feedback ? "6 4" : undefined}
+                strokeWidth={feedback ? 2.5 : 2}
+                strokeDasharray={feedback ? "8 5" : undefined}
                 markerEnd={feedback ? "url(#dag-arrow-feedback)" : "url(#dag-arrow)"}
                 className="transition-[stroke] duration-300"
               />
@@ -241,8 +241,8 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
                 textAnchor="middle"
                 dominantBaseline={state.message ? "auto" : "central"}
                 fill={style.text}
-                fontSize={12}
-                fontWeight={600}
+                fontSize={13}
+                fontWeight={700}
                 fontFamily="system-ui, -apple-system, sans-serif"
               >
                 {node.label}
@@ -252,10 +252,10 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
               {state.message && (
                 <text
                   x={node.x + NODE_W / 2}
-                  y={node.y + 36}
+                  y={node.y + 37}
                   textAnchor="middle"
                   fill={style.text}
-                  fontSize={9}
+                  fontSize={10}
                   fontWeight={400}
                   fontFamily="system-ui, -apple-system, sans-serif"
                   opacity={0.85}
@@ -317,8 +317,9 @@ export function DAGVisualization({ agentStates }: DAGVisualizationProps) {
           x={(col2X + col3X + NODE_W) / 2}
           y={SVG_H - 2}
           textAnchor="middle"
-          fill="#f59e0b"
-          fontSize={10}
+          fill="#d97706"
+          fontSize={11}
+          fontWeight={600}
           fontStyle="italic"
           fontFamily="system-ui, -apple-system, sans-serif"
         >

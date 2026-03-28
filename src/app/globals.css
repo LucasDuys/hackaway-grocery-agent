@@ -101,6 +101,23 @@ body {
   animation: pipeline-dot-pulse-ring 1.5s ease-out infinite;
 }
 
+/* Pipeline card subtle pulse for running state */
+@keyframes pipeline-card-pulse {
+  0% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 0 rgba(59, 130, 246, 0.15);
+  }
+  50% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(59, 130, 246, 0.08);
+  }
+  100% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 0 rgba(59, 130, 246, 0.15);
+  }
+}
+
+.pipeline-card-pulse {
+  animation: pipeline-card-pulse 2s ease-in-out infinite;
+}
+
 /* ========== Mobile-First Responsive ========== */
 
 /* Tab bar for mobile */
