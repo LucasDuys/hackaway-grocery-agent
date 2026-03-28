@@ -71,6 +71,7 @@ export async function runScheduleAgent(
     const patterns = deriveDeliveryPatterns(data.orders);
 
     const result = await generateObject({
+      mode: "tool",
       model: getModel("schedule-agent"),
       schema: scheduleAgentSchema,
       system: buildScheduleAgentPrompt(data.deliverySlots, patterns),

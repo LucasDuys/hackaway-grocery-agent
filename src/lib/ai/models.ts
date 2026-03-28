@@ -1,6 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createOpenAI, openai } from "@ai-sdk/openai";
 
 // ---------------------------------------------------------------------------
 // Provider detection -- check which API keys are available at runtime
@@ -19,15 +18,16 @@ function hasAnthropic(): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// OpenRouter provider (OpenAI-compatible API)
+// OpenRouter provider -- uses createOpenAI with custom baseURL
+// This gives proper support for tool mode and structured outputs
 // ---------------------------------------------------------------------------
 
 function getOpenRouter() {
-  return createOpenAICompatible({
-    name: "openrouter",
+  const or = createOpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY!,
   });
+  return or;
 }
 
 // ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ type AgentRole =
  *
  * Priority chain:
  *   1. OpenAI (if OPENAI_API_KEY is set)
- *   2. OpenRouter (if OPENROUTER_API_KEY is set) -- uses OpenAI-compatible format
+ *   2. OpenRouter (if OPENROUTER_API_KEY is set)
  *   3. Anthropic (if ANTHROPIC_API_KEY is set)
  *   4. Throws a clear error if no keys are available
  */
@@ -66,19 +66,11 @@ export function getModel(agent: AgentRole) {
   // --- Try OpenRouter second ---
   if (hasOpenRouter()) {
     const or = getOpenRouter();
-    const openrouterModels: Record<AgentRole, ReturnType<typeof or>> = {
-      "order-analyst": or("openai/gpt-4.1-mini"),
-      "meal-planner": or("openai/gpt-4.1-mini"),
-      "schedule-agent": or("openai/gpt-4.1-mini"),
-      "budget-optimizer": or("openai/gpt-4.1"),
-      orchestrator: or("anthropic/claude-sonnet-4-20250514"),
-    };
-    return openrouterModels[agent];
+    return or("openai/gpt-4.1-mini", { structuredOutputs: false });
   }
 
   // --- Try Anthropic third ---
   if (hasAnthropic()) {
-    // All agents use claude-sonnet when Anthropic is the only provider
     return anthropic("claude-sonnet-4-20250514");
   }
 

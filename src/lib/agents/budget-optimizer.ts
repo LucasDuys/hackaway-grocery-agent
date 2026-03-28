@@ -67,6 +67,7 @@ export async function runBudgetOptimizer(
 
   try {
     const result = await generateObject({
+      mode: "tool",
       model: getModel("budget-optimizer"),
       schema: budgetOptimizerSchema,
       system: buildBudgetOptimizerPrompt(
