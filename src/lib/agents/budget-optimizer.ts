@@ -10,7 +10,11 @@ interface CartItemInput {
   quantity: number;
   price: number; // cents
   source: string; // which agent added it
+  reasonTag?: string; // e.g. "recipe", "repeat", "suggestion"
 }
+
+/** Maximum number of substitutions before switching to removal */
+const MAX_SWAPS = 3;
 
 type ItemPriority = "staple" | "regular" | "occasional" | "one-time";
 
@@ -87,6 +91,7 @@ export async function runBudgetOptimizer(
           name: item.name,
           quantity: item.quantity,
           price: item.price,
+          reasonTag: item.reasonTag,
         })),
         budget,
         productAlternatives,
@@ -153,10 +158,25 @@ function enforceHardBudget(
       return { ...item, effectivePrice, priority };
     });
 
+  // Count existing swaps (substitutions, not removals) from LLM result
+  let swapCount = adjustments.filter((a) => a.replacement.price > 0).length;
+
+  // Build set of protected item IDs (recipe and staple items are never swapped)
+  const protectedFromSwap = new Set<string>();
+  for (const item of cartItems) {
+    const priority = itemPriorities?.get(item.itemId) ?? "regular";
+    if (item.reasonTag === "recipe" || item.reasonTag === "repeat" || priority === "staple") {
+      protectedFromSwap.add(item.itemId);
+    }
+  }
+
   // First pass: try substitutions for items the LLM did not already substitute
+  // Respect MAX_SWAPS cap and never swap protected items
   for (const item of remainingItems) {
     if (currentTotal <= budget) break;
+    if (swapCount >= MAX_SWAPS) break;
     if (substitutedIds.has(item.itemId)) continue;
+    if (protectedFromSwap.has(item.itemId)) continue;
 
     const itemAlts = alternatives.get(item.itemId);
     if (!itemAlts || itemAlts.length === 0) continue;
@@ -179,13 +199,15 @@ function enforceHardBudget(
 
     item.effectivePrice = cheapest.price;
     currentTotal -= savings;
+    swapCount++;
   }
 
   // Second pass: remove items by priority (one-time -> occasional -> regular)
-  // Staples are NEVER removed.
+  // Staples and recipe items are NEVER removed.
   const removable = remainingItems
     .filter((item) => {
       if (substitutedIds.has(item.itemId) && removedIds.has(item.itemId)) return false;
+      if (protectedFromSwap.has(item.itemId)) return false;
       const priority = item.priority;
       return priority !== "staple";
     })
@@ -240,8 +262,19 @@ function buildFallbackOptimization(
   const adjustments: BudgetOptimizerOutput["adjustments"] = [];
   let currentTotal = originalTotal;
 
+  // Build set of protected item IDs (recipe and staple items are never swapped)
+  const protectedFromSwap = new Set<string>();
+  for (const item of cartItems) {
+    const priority = itemPriorities?.get(item.itemId) ?? "regular";
+    if (item.reasonTag === "recipe" || item.reasonTag === "repeat" || priority === "staple") {
+      protectedFromSwap.add(item.itemId);
+    }
+  }
+
   // Phase 1: Substitute expensive items with cheapest alternative
+  // Respect MAX_SWAPS cap and never swap protected items
   const sortedItems = [...cartItems].sort((a, b) => b.price - a.price);
+  let swapCount = 0;
 
   // Track effective prices after substitutions
   const effectivePrices = new Map<string, number>();
@@ -251,6 +284,8 @@ function buildFallbackOptimization(
 
   for (const item of sortedItems) {
     if (currentTotal <= budget) break;
+    if (swapCount >= MAX_SWAPS) break;
+    if (protectedFromSwap.has(item.itemId)) continue;
 
     const itemAlts = alternatives.get(item.itemId);
     if (!itemAlts || itemAlts.length === 0) continue;
@@ -281,14 +316,17 @@ function buildFallbackOptimization(
 
     effectivePrices.set(item.itemId, cheapest.price);
     currentTotal -= savings;
+    swapCount++;
   }
 
-  // Phase 2: Remove items by priority until under budget. Staples never removed.
+  // Phase 2: Remove items by priority until under budget.
+  // Staples and recipe items are never removed.
   if (currentTotal > budget) {
     const substitutedIds = new Set(adjustments.map((a) => a.original.itemId));
 
     const removable = cartItems
       .filter((item) => {
+        if (protectedFromSwap.has(item.itemId)) return false;
         const priority = itemPriorities?.get(item.itemId) ?? "regular";
         return priority !== "staple";
       })

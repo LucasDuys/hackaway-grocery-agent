@@ -5,6 +5,7 @@ interface CartItemForBudget {
   name: string;
   quantity: number;
   price: number;
+  reasonTag?: string;
 }
 
 interface ProductAlternative {
@@ -40,7 +41,10 @@ This is the key demo moment -- your reasoning must be transparent, specific, and
 </identity>
 
 <context>
-<cart_items>${JSON.stringify(cart, null, 2)}</cart_items>
+<cart_items>${JSON.stringify(cart.map((item) => ({
+    ...item,
+    tags: [item.reasonTag].filter(Boolean),
+  })), null, 2)}</cart_items>
 <cart_total_cents>${cartTotal}</cart_total_cents>
 <budget_target_cents>${budget}</budget_target_cents>
 <over_budget>${cartTotal > budget}</over_budget>
@@ -57,7 +61,13 @@ You have two tools to bring the cart under budget:
 - SUBSTITUTE: Replace an item with a cheaper alternative from the product_alternatives list.
 - REMOVE: Drop an item entirely. Set the replacement price to 0 and append "(REMOVED)" to the replacement name. Use the same itemId for both original and replacement.
 
-Priority order for removal: one-time items first, then occasional, then regular. NEVER remove staple items.
+HARD CONSTRAINTS:
+- Maximum 3 substitutions. If 3 swaps are not enough to meet the budget, REMOVE low-priority items instead of making more swaps.
+- NEVER substitute items tagged as "recipe" -- these are explicitly requested by the user for their meal plan.
+- NEVER substitute items tagged as "repeat" (weekly staples) -- the user expects these every week.
+- NEVER remove staple items or recipe items.
+
+Priority for removal: one-time items first, then occasional items, then regular items. NEVER remove staple or recipe items.
 
 Your optimizedTotal MUST be at or below the budget. If substitution alone cannot achieve this, remove items.
 

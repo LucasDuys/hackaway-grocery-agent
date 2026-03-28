@@ -159,6 +159,21 @@ export async function POST(req: Request) {
         );
 
         // ---------------------------------------------------------------
+        // Step 1b: Synthesize meals from guest events without a matching meal
+        // ---------------------------------------------------------------
+        for (const event of intent.guestEvents) {
+          const hasMealForDay = intent.meals.some(
+            (m) => m.day.toLowerCase() === event.day.toLowerCase()
+          );
+          if (!hasMealForDay) {
+            intent.meals.push({
+              day: event.day,
+              dish: `dinner for ${event.guestCount} guests (${event.description})`,
+            });
+          }
+        }
+
+        // ---------------------------------------------------------------
         // Step 2: Prefetch all Picnic data (parallel API calls)
         // ---------------------------------------------------------------
         sendAgentStatus(send, "prefetch", "running", "Fetching Picnic data...");
@@ -341,6 +356,7 @@ export async function POST(req: Request) {
               quantity: item.quantity,
               price: item.price,
               source: item.agentSource,
+              reasonTag: item.reasonTag,
             }));
 
             budgetOptimizerResult = await runBudgetOptimizer(
