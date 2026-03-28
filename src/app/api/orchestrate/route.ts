@@ -566,6 +566,34 @@ export async function POST(req: Request) {
           }
         }
 
+        // For items still at the EUR 2.99 fallback, search the Picnic API
+        // directly to get real prices instead of showing made-up amounts
+        const { PicnicClient } = await import("@/lib/picnic/client");
+        const liveClient = new PicnicClient();
+
+        const fallbackItems = mergedItems.filter(item => item.price === 299 || item.price <= 0);
+        if (fallbackItems.length > 0) {
+          await liveClient.authenticate();
+          for (const item of fallbackItems) {
+            try {
+              const searchResult = await liveClient.get<{ results?: Array<{ id: string; price: number; image_url?: string }> }>("hackathon-search-products", {
+                query: item.name.split(/\s+/).slice(0, 2).join(" "),
+                limit: "3",
+              });
+              if (searchResult?.results?.length && searchResult.results.length > 0) {
+                const match = searchResult.results[0];
+                item.price = match.price;
+                item.itemId = match.id;
+                if (match.image_url) {
+                  item.imageUrl = match.image_url;
+                }
+              }
+            } catch {
+              // Keep fallback price if search fails
+            }
+          }
+        }
+
         let totalCost = mergedItems.reduce(
           (sum, item) => sum + item.price * item.quantity,
           0

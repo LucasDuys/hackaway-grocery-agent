@@ -118,6 +118,7 @@ export function CartItemRow({ item }: CartItemProps) {
               <img
                 src={getPicnicImageUrl(item.imageUrl, "medium") || item.imageUrl}
                 alt={item.name}
+                loading="eager"
                 className="h-full w-full rounded-lg object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -237,6 +238,7 @@ function ExpandedDetail({
             <img
               src={largeImageUrl}
               alt={displayName}
+              loading="eager"
               className="h-full w-full rounded-lg object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
