@@ -67,7 +67,7 @@ export function FeedEntry({ event }: FeedEntryProps) {
       </span>
 
       {/* Message */}
-      <span className="text-[var(--text-primary)]">{event.message}</span>
+      <span className="feed-message text-[var(--text-primary)] min-w-0 break-words">{event.message}</span>
     </div>
   );
 }

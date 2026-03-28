@@ -155,7 +155,7 @@ function TimelineBar({
   const progress = (completedCount / steps.length) * 100;
 
   return (
-    <div className="shrink-0 border-b border-[var(--border-light)] px-6 py-4">
+    <div className="pipeline-timeline shrink-0 border-b border-[var(--border-light)] px-6 py-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
           Pipeline Progress
@@ -287,7 +287,7 @@ function StepCard({
       {/* Header */}
       <button
         onClick={() => setExpanded((prev) => !prev)}
-        className="flex w-full items-center gap-3 px-5 py-4 text-left"
+        className="pipeline-step-header flex w-full items-center gap-3 px-5 py-4 text-left"
       >
         {/* Step number */}
         <div
@@ -338,7 +338,7 @@ function StepCard({
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="border-t border-[var(--border-light)] px-5 py-3">
+        <div className="pipeline-step-detail border-t border-[var(--border-light)] px-5 py-3">
           <div className="space-y-1.5">
             {summaryLines.map((line, i) => (
               <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
@@ -391,8 +391,8 @@ export function PipelineView({ agentStates, activityLog }: PipelineViewProps) {
   return (
     <div className="flex h-full flex-col">
       <TimelineBar steps={pipelineSteps} agentStates={agentStates} />
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="mx-auto max-w-lg space-y-3">
+      <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 sm:py-4">
+        <div className="mx-auto max-w-lg space-y-2 sm:space-y-3">
           {stepsWithData.map(({ step, status, summaryLines, detailEvents }) => (
             <StepCard
               key={step.id}

@@ -67,12 +67,12 @@ export function CartItemRow({ item }: CartItemProps) {
         onTouchEnd={handleTouchEnd}
       >
         {/* Product image */}
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-muted)] text-sm text-[var(--text-muted)] overflow-hidden">
+        <div className="cart-item-img flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-muted)] text-sm text-[var(--text-muted)] overflow-hidden">
           {item.imageUrl ? (
             <img
               src={getPicnicImageUrl(item.imageUrl, "medium") || item.imageUrl}
               alt={item.name}
-              className="h-12 w-12 rounded-lg object-cover"
+              className="h-full w-full rounded-lg object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = "none";

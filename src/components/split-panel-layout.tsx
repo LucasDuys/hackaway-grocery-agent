@@ -47,7 +47,7 @@ export function SplitPanelLayout({
         <div className="mobile-tab-bar shrink-0 border-b border-[var(--border-light)] bg-[var(--surface)]">
           <button
             onClick={() => setActiveTab("cart")}
-            className={`flex-1 py-3 text-center text-sm font-semibold transition-colors ${
+            className={`flex-1 min-h-[44px] py-3 text-center text-sm font-semibold transition-colors ${
               activeTab === "cart"
                 ? "border-b-2 border-[var(--picnic-red)] text-[var(--picnic-red)]"
                 : "text-[var(--text-muted)]"
@@ -57,7 +57,7 @@ export function SplitPanelLayout({
           </button>
           <button
             onClick={() => setActiveTab("pipeline")}
-            className={`flex-1 py-3 text-center text-sm font-semibold transition-colors ${
+            className={`flex-1 min-h-[44px] py-3 text-center text-sm font-semibold transition-colors ${
               activeTab === "pipeline"
                 ? "border-b-2 border-[var(--picnic-red)] text-[var(--picnic-red)]"
                 : "text-[var(--text-muted)]"

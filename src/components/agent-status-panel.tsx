@@ -23,7 +23,7 @@ interface AgentStatusPanelProps {
 
 export function AgentStatusPanel({ agentStates }: AgentStatusPanelProps) {
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-[var(--border-light)] px-4 py-3">
+    <div className="agent-status-row flex shrink-0 items-center gap-3 border-b border-[var(--border-light)] px-3 sm:px-4 py-3">
       {agents.map(({ name, label, color }) => {
         const state = agentStates[name] ?? { status: "pending" as AgentStatus, message: "" };
         const indicator = statusIndicators[state.status];

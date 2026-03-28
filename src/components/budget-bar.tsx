@@ -45,11 +45,11 @@ export function BudgetBar({ currentTotal, budget, isComplete }: BudgetBarProps) 
 
   return (
     <div className="rounded-2xl bg-[var(--surface)] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
-      <div className="mb-2.5 flex items-baseline justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <div className="mb-2.5 flex items-baseline justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] shrink-0">
           Budget
         </span>
-        <div className="flex items-baseline gap-1">
+        <div className="budget-amounts flex items-baseline gap-1">
           <span className={`text-sm font-bold ${textColor}`}>
             EUR {centsToEur(currentTotal)}
           </span>

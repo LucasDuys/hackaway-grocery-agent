@@ -33,6 +33,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Picnic-style scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -181,13 +191,28 @@ body {
   border-radius: 12px;
 }
 
-/* Sticky input bar on mobile */
+/* Fixed input bar on mobile -- always visible at bottom */
 @media (max-width: 1024px) {
   .input-bar-mobile {
-    position: sticky;
+    position: fixed;
     bottom: 0;
-    z-index: 20;
+    left: 0;
+    right: 0;
+    z-index: 40;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Reserve space for the fixed input bar so content is not hidden behind it */
+  .input-bar-spacer {
+    display: block;
+    height: 72px; /* matches input bar height */
+    flex-shrink: 0;
+  }
+}
+
+@media (min-width: 1025px) {
+  .input-bar-spacer {
+    display: none;
   }
 }
 
@@ -205,5 +230,82 @@ body {
 @media (max-width: 1024px) {
   .input-bar-mobile input:focus {
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Cart item image: smaller on mobile */
+@media (max-width: 639px) {
+  .cart-item-img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .cart-item-content {
+    padding: 6px 8px !important;
+    gap: 8px !important;
+  }
+}
+
+/* Budget bar: prevent EUR amounts from wrapping */
+.budget-amounts {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Hide pipeline status text on very small screens, show only dot */
+@media (max-width: 480px) {
+  .pipeline-status-text {
+    display: none;
+  }
+}
+
+/* DAG visualization: hide on mobile, too complex for small screens */
+@media (max-width: 1024px) {
+  .dag-mobile-hide {
+    display: none;
+  }
+}
+
+/* Pipeline step cards: compact on mobile */
+@media (max-width: 639px) {
+  .pipeline-step-header {
+    padding: 12px 12px !important;
+  }
+
+  .pipeline-step-detail {
+    padding: 8px 12px !important;
+  }
+
+  .pipeline-timeline {
+    padding: 12px 12px !important;
+  }
+}
+
+/* Agent status panel: wrap on mobile */
+@media (max-width: 1024px) {
+  .agent-status-row {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+}
+
+/* Feed entry: stack on mobile for readability */
+@media (max-width: 639px) {
+  .feed-entry {
+    flex-wrap: wrap;
+    gap: 4px !important;
+    padding: 8px 8px !important;
+  }
+
+  .feed-entry .feed-message {
+    width: 100%;
+    padding-left: 0;
+  }
+}
+
+/* Mobile tab bar: 44px minimum touch target */
+@media (max-width: 1024px) {
+  .mobile-tab-bar button {
+    min-height: 44px;
   }
 }

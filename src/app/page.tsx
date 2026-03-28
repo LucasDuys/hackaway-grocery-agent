@@ -175,7 +175,7 @@ export default function Home() {
             <div className="flex shrink-0 border-b border-[var(--border-light)]">
               <button
                 onClick={() => setRightTab("pipeline")}
-                className={`flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                className={`flex-1 min-h-[44px] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
                   rightTab === "pipeline"
                     ? "border-b-2 border-[var(--agent-orchestrator)] text-[var(--agent-orchestrator)]"
                     : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
@@ -185,7 +185,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setRightTab("feed")}
-                className={`flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                className={`flex-1 min-h-[44px] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
                   rightTab === "feed"
                     ? "border-b-2 border-[var(--agent-orchestrator)] text-[var(--agent-orchestrator)]"
                     : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"

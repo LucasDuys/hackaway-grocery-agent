@@ -30,7 +30,7 @@ export function AgentActivityFeed({ events }: AgentActivityFeedProps) {
       </div>
 
       {/* Scrollable feed */}
-      <div className="flex-1 overflow-y-auto px-1 py-2">
+      <div className="flex-1 overflow-y-auto px-1 sm:px-2 py-2">
         {events.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-sm text-[var(--text-muted)]">

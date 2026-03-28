@@ -93,12 +93,12 @@ export function CartView({ summary, isRunning = false }: CartViewProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Budget bar -- sticky on mobile */}
-      <div className="budget-bar-sticky shrink-0 px-4 pt-4 pb-1">
+      <div className="budget-bar-sticky shrink-0 px-3 sm:px-4 pt-3 sm:pt-4 pb-1">
         <BudgetBar currentTotal={summary.totalCost} budget={summary.budget} isComplete={!isRunning} />
       </div>
 
       {/* Scrollable cart list */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4">
         {categoryOrder.map((cat) => {
           const items = grouped.get(cat)!;
           if (items.length === 0) return null;
@@ -125,7 +125,7 @@ export function CartView({ summary, isRunning = false }: CartViewProps) {
       </div>
 
       {/* Cart summary footer */}
-      <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)] px-5 py-4">
+      <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)] px-3 sm:px-5 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
             <span className="text-sm text-[var(--text-secondary)]">
