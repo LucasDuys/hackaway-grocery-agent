@@ -2,7 +2,8 @@ import type { AnalysisResult, PicnicData } from "@/types";
 
 export function buildOrderAnalystPrompt(
   analysis: AnalysisResult,
-  data: PicnicData
+  data: PicnicData,
+  budgetCents?: number | null
 ): string {
   const recentOrders = data.orders.slice(0, 5).map((o) => ({
     date: new Date(o.delivery_time).toISOString().slice(0, 10),
@@ -34,6 +35,8 @@ You reason about behavioral evidence -- not raw statistics.
 6. Calculate totalEstimatedCost as the sum of (price * suggestedQuantity) for all recommended items, in cents.
 7. Write a short householdInsight string summarizing the household pattern (e.g. "Appears to be a couple with a weekly shop averaging EUR 65").
 8. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
+9. BUDGET AWARENESS: ${budgetCents ? `The user has a budget of EUR ${(budgetCents / 100).toFixed(2)}. Keep your recommendations well UNDER this budget (aim for 50-60% of budget) because the Meal Planner will add recipe ingredients on top. Prefer cheaper variants of products when available. Do NOT recommend expensive specialty items (e.g. premium coffee beans at EUR 30+) when the budget is tight.` : 'No explicit budget set. Recommend based on the household\'s average weekly spend.'}
+10. When the budget is tight, recommend FEWER items (10-15 essential staples) rather than a full 25-item cart that will need heavy optimization later.
 </instructions>
 
 <output_schema>

@@ -1,249 +1,171 @@
-import { trace, type Span, type Tracer } from "@opentelemetry/api";
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { resourceFromAttributes } from "@opentelemetry/resources";
-import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
+import OpenAI from "openai";
+import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import type { AgentName, AgentEvent } from "@/types";
 
 // ---------------------------------------------------------------------------
-// OTEL Provider -- sends traces to orq.ai's OTEL endpoint
+// orq.ai Proxy Client -- routes LLM calls through orq.ai for full tracing
 // ---------------------------------------------------------------------------
+//
+// Uses orq.ai's OpenAI-compatible proxy. Every call automatically gets:
+//   - Thread view (grouped by session)
+//   - Full system prompt visible in dashboard
+//   - Token usage, latency, cost tracking
+//   - Model routing and fallback
+//   - Real-time trace + timeline view
 
-let _initialized = false;
-let _tracer: Tracer;
+let _proxyClient: OpenAI | null = null;
 
-function ensureInitialized(): Tracer {
-  if (!_initialized) {
-    const exporter = new OTLPTraceExporter({
-      url: "https://api.orq.ai/v2/otel/v1/traces",
-      headers: {
-        Authorization: `Bearer ${process.env.ORQ_API_KEY}`,
-      },
+function getProxyClient(): OpenAI {
+  if (!_proxyClient) {
+    _proxyClient = new OpenAI({
+      apiKey: process.env.ORQ_API_KEY!,
+      baseURL: "https://api.orq.ai/v2/proxy",
     });
-
-    const provider = new NodeTracerProvider({
-      resource: resourceFromAttributes({
-        [ATTR_SERVICE_NAME]: "grocery-orchestrator",
-        [ATTR_SERVICE_VERSION]: "1.0.0",
-      }),
-      spanProcessors: [new BatchSpanProcessor(exporter)],
-    });
-
-    provider.register();
-
-    _tracer = trace.getTracer("grocery-orchestrator");
-    _initialized = true;
   }
-  return _tracer;
+  return _proxyClient;
 }
 
+// Extend OpenAI params with orq.ai's thread/contact fields
+type OrqParams = ChatCompletionCreateParamsNonStreaming & {
+  orq?: {
+    thread?: { id: string; tags?: string[] };
+    contact?: { id: string; display_name?: string };
+  };
+};
+
 // ---------------------------------------------------------------------------
-// traceAgentCall -- wraps any agent function with a full OTEL span
+// traceAgentCall -- runs an LLM call through orq.ai proxy with thread grouping
 // ---------------------------------------------------------------------------
 
-/**
- * Wraps a Vercel AI SDK agent call with OpenTelemetry tracing that reports
- * to orq.ai. Every field is visible in the orq dashboard:
- *
- * - System prompt (full text)
- * - User message / inputs
- * - Agent output (full JSON)
- * - Model used (e.g. gpt-4o-mini)
- * - Provider (openai / anthropic)
- * - Latency
- * - Token usage (if available from Vercel AI SDK response)
- * - Session/thread grouping
- * - Error status
- *
- * Usage:
- *   const result = await traceAgentCall({
- *     agent: "order-analyst",
- *     sessionId,
- *     model: "gpt-4o-mini",
- *     provider: "openai",
- *     systemPrompt: buildOrderAnalystPrompt(analysis, data),
- *     userMessage: "Analyze order history",
- *     fn: async () => {
- *       const { object } = await generateObject({ ... });
- *       return object;
- *     },
- *     // Optional: pass token usage after the call
- *     getUsage: (result) => ({ inputTokens: 1200, outputTokens: 350 }),
- *   });
- */
-export interface TraceAgentCallOptions<T> {
+export interface TraceAgentCallOptions {
   agent: AgentName;
   sessionId: string;
-  model: string;
-  provider: "openai" | "anthropic";
+  model?: string;
   systemPrompt: string;
   userMessage: string;
-  fn: () => Promise<T>;
   metadata?: Record<string, string>;
-  getUsage?: (result: T) => { inputTokens?: number; outputTokens?: number };
+  contactId?: string;
 }
-
-export async function traceAgentCall<T>(
-  options: TraceAgentCallOptions<T>
-): Promise<{ result: T; latencyMs: number; event: AgentEvent }> {
-  const tracer = ensureInitialized();
-
-  return tracer.startActiveSpan(
-    `agent.${options.agent}`,
-    async (span: Span) => {
-      const startTime = Date.now();
-
-      // GenAI semantic convention attributes
-      span.setAttribute("gen_ai.system", options.provider);
-      span.setAttribute("gen_ai.request.model", options.model);
-      span.setAttribute("gen_ai.request.type", "chat");
-
-      // Agent-specific attributes
-      span.setAttribute("agent.name", options.agent);
-      span.setAttribute("agent.session_id", options.sessionId);
-      span.setAttribute("agent.system_prompt", options.systemPrompt);
-      span.setAttribute("agent.user_message", options.userMessage);
-
-      // Custom metadata
-      if (options.metadata) {
-        for (const [k, v] of Object.entries(options.metadata)) {
-          span.setAttribute(`agent.metadata.${k}`, v);
-        }
-      }
-
-      try {
-        const result = await options.fn();
-        const latencyMs = Date.now() - startTime;
-
-        // Log output
-        span.setAttribute(
-          "agent.output",
-          typeof result === "string"
-            ? result
-            : JSON.stringify(result)
-        );
-        span.setAttribute("agent.latency_ms", latencyMs);
-
-        // Token usage if available
-        if (options.getUsage) {
-          const usage = options.getUsage(result);
-          if (usage.inputTokens) {
-            span.setAttribute("gen_ai.usage.input_tokens", usage.inputTokens);
-          }
-          if (usage.outputTokens) {
-            span.setAttribute("gen_ai.usage.output_tokens", usage.outputTokens);
-          }
-        }
-
-        span.setStatus({ code: 1 }); // OK
-        span.end();
-
-        const event: AgentEvent = {
-          agent: options.agent,
-          action: "SUGGEST",
-          message: `${options.agent} completed in ${latencyMs}ms`,
-          timestamp: Date.now(),
-          details: { latencyMs },
-        };
-
-        return { result, latencyMs, event };
-      } catch (error) {
-        const latencyMs = Date.now() - startTime;
-        span.setStatus({
-          code: 2, // ERROR
-          message: error instanceof Error ? error.message : String(error),
-        });
-        span.setAttribute("agent.error", String(error));
-        span.setAttribute("agent.latency_ms", latencyMs);
-        span.end();
-        throw error;
-      }
-    }
-  );
-}
-
-// ---------------------------------------------------------------------------
-// traceToolCall -- traces individual tool/function invocations within agents
-// ---------------------------------------------------------------------------
 
 /**
- * Traces a tool call (e.g. Picnic API fetch, analysis computation).
- * Shows up as a child span under the parent agent span in orq.ai.
- */
-export async function traceToolCall<T>(options: {
-  name: string;
-  agent: AgentName;
-  fn: () => Promise<T>;
-  metadata?: Record<string, string>;
-}): Promise<T> {
-  const tracer = ensureInitialized();
-
-  return tracer.startActiveSpan(`tool.${options.name}`, async (span: Span) => {
-    span.setAttribute("gen_ai.tool.name", options.name);
-    span.setAttribute("agent.name", options.agent);
-
-    if (options.metadata) {
-      for (const [k, v] of Object.entries(options.metadata)) {
-        span.setAttribute(`tool.metadata.${k}`, v);
-      }
-    }
-
-    try {
-      const result = await options.fn();
-      span.setStatus({ code: 1 });
-      span.end();
-      return result;
-    } catch (error) {
-      span.setStatus({
-        code: 2,
-        message: error instanceof Error ? error.message : String(error),
-      });
-      span.end();
-      throw error;
-    }
-  });
-}
-
-// ---------------------------------------------------------------------------
-// traceOrchestration -- top-level span for the entire pipeline
-// ---------------------------------------------------------------------------
-
-/**
- * Wraps the full orchestration pipeline (all 5 agents) in a single parent span.
- * In orq.ai this becomes the root trace, with each agent as a child span.
+ * Runs an LLM call through orq.ai's proxy for full observability.
+ * Every call in the same sessionId appears in the same thread in the dashboard.
  *
- * Usage in the orchestration route:
- *   const result = await traceOrchestration(sessionId, userInput, async () => {
- *     // ... run all agents ...
- *     return cartSummary;
- *   });
+ * You'll see in orq.ai:
+ *   - System prompt (full text)
+ *   - User message
+ *   - Assistant response
+ *   - Token usage (input/output/total)
+ *   - Model used
+ *   - Latency
+ *   - Thread grouping (all agents in one session)
+ *   - Tags per agent
  */
-export async function traceOrchestration<T>(
-  sessionId: string,
-  userInput: string,
-  fn: () => Promise<T>
-): Promise<T> {
-  const tracer = ensureInitialized();
+export async function traceAgentCall(options: TraceAgentCallOptions): Promise<{
+  content: string | null;
+  latencyMs: number;
+  usage: { inputTokens: number; outputTokens: number; totalTokens: number };
+  event: AgentEvent;
+}> {
+  const client = getProxyClient();
+  const startTime = Date.now();
 
-  return tracer.startActiveSpan("orchestration.pipeline", async (span: Span) => {
-    span.setAttribute("orchestration.session_id", sessionId);
-    span.setAttribute("orchestration.user_input", userInput);
+  const params: OrqParams = {
+    model: options.model ?? "openai/gpt-4o-mini",
+    messages: [
+      { role: "system", content: options.systemPrompt },
+      { role: "user", content: options.userMessage },
+    ],
+    orq: {
+      thread: {
+        id: options.sessionId,
+        tags: ["grocery-orchestrator", options.agent],
+      },
+      ...(options.contactId
+        ? { contact: { id: options.contactId, display_name: "Hackaway User" } }
+        : {}),
+    },
+  };
 
-    try {
-      const result = await fn();
-      span.setStatus({ code: 1 });
-      span.end();
-      return result;
-    } catch (error) {
-      span.setStatus({
-        code: 2,
-        message: error instanceof Error ? error.message : String(error),
-      });
-      span.end();
-      throw error;
-    }
-  });
+  const completion = await client.chat.completions.create(
+    params as ChatCompletionCreateParamsNonStreaming
+  );
+
+  const latencyMs = Date.now() - startTime;
+  const content = completion.choices?.[0]?.message?.content ?? null;
+  const usage = {
+    inputTokens: completion.usage?.prompt_tokens ?? 0,
+    outputTokens: completion.usage?.completion_tokens ?? 0,
+    totalTokens: completion.usage?.total_tokens ?? 0,
+  };
+
+  const event: AgentEvent = {
+    agent: options.agent,
+    action: "SUGGEST",
+    message: `${options.agent} completed in ${latencyMs}ms (${usage.totalTokens} tokens)`,
+    timestamp: Date.now(),
+    details: { latencyMs, ...usage },
+  };
+
+  return { content, latencyMs, usage, event };
+}
+
+// ---------------------------------------------------------------------------
+// traceAgentCallJSON -- same as traceAgentCall but parses JSON response
+// ---------------------------------------------------------------------------
+
+/**
+ * Convenience wrapper: calls the proxy and parses the response as JSON.
+ * Use for agents that return structured output (order-analyst, meal-planner, etc.)
+ */
+export async function traceAgentCallJSON<T>(
+  options: TraceAgentCallOptions
+): Promise<{
+  result: T;
+  latencyMs: number;
+  usage: { inputTokens: number; outputTokens: number; totalTokens: number };
+  event: AgentEvent;
+}> {
+  const client = getProxyClient();
+  const startTime = Date.now();
+
+  const params: OrqParams = {
+    model: options.model ?? "openai/gpt-4o-mini",
+    messages: [
+      { role: "system", content: options.systemPrompt },
+      { role: "user", content: options.userMessage },
+    ],
+    response_format: { type: "json_object" },
+    orq: {
+      thread: {
+        id: options.sessionId,
+        tags: ["grocery-orchestrator", options.agent],
+      },
+    },
+  };
+
+  const completion = await client.chat.completions.create(
+    params as ChatCompletionCreateParamsNonStreaming
+  );
+
+  const latencyMs = Date.now() - startTime;
+  const raw = completion.choices?.[0]?.message?.content ?? "{}";
+  const result = JSON.parse(raw) as T;
+  const usage = {
+    inputTokens: completion.usage?.prompt_tokens ?? 0,
+    outputTokens: completion.usage?.completion_tokens ?? 0,
+    totalTokens: completion.usage?.total_tokens ?? 0,
+  };
+
+  const event: AgentEvent = {
+    agent: options.agent,
+    action: "SUGGEST",
+    message: `${options.agent} completed in ${latencyMs}ms (${usage.totalTokens} tokens)`,
+    timestamp: Date.now(),
+    details: { latencyMs, ...usage },
+  };
+
+  return { result, latencyMs, usage, event };
 }
 
 // ---------------------------------------------------------------------------

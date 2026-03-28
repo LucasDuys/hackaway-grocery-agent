@@ -213,7 +213,7 @@ export async function POST(req: Request) {
         // means we need order analyst first OR pass an empty base cart for
         // parallel execution. We run order analyst first, then meal planner +
         // schedule in parallel for correctness.
-        const orderResult = await runOrderAnalyst(analysis, data);
+        const orderResult = await runOrderAnalyst(analysis, data, intent.budget);
 
         // Send order analyst events
         for (const item of orderResult.recommendedItems.slice(0, 5)) {
@@ -244,6 +244,45 @@ export async function POST(req: Request) {
           runMealPlanner(intent, data, orderResult),
           runScheduleAgent(data, analysis),
         ]);
+
+        // Build catalog price map (used for meal cost correction and cart price correction)
+        const catalogPriceMap = new Map<string, number>();
+        for (const p of productCatalog as Array<{ selling_unit_id: string; price: number }>) {
+          catalogPriceMap.set(p.selling_unit_id, p.price);
+        }
+        for (const order of data.orders) {
+          for (const item of order.items) {
+            if (!catalogPriceMap.has(item.selling_unit_id) && item.price > 0) {
+              catalogPriceMap.set(item.selling_unit_id, item.price);
+            }
+          }
+        }
+
+        // Correct meal costs from catalog (LLM guesses round numbers)
+        for (const meal of mealResult.meals) {
+          let realCost = 0;
+          for (const ing of meal.ingredients) {
+            const catalogPrice = catalogPriceMap.get(ing.itemId);
+            if (catalogPrice && catalogPrice > 0) {
+              ing.price = catalogPrice;
+            } else if (ing.price <= 0) {
+              // Fuzzy name match
+              const nameWords = ing.name.toLowerCase().split(/\s+/);
+              const match = (productCatalog as Array<{ selling_unit_id: string; name: string; price: number }>).find(p => {
+                const pName = p.name.toLowerCase();
+                return nameWords.some(w => w.length > 3 && pName.includes(w));
+              });
+              if (match) {
+                ing.price = match.price;
+                ing.itemId = match.selling_unit_id;
+              } else {
+                ing.price = 299;
+              }
+            }
+            realCost += ing.price * ing.quantity;
+          }
+          meal.estimatedCost = realCost;
+        }
 
         // Send meal planner events
         for (const meal of mealResult.meals) {
@@ -282,18 +321,6 @@ export async function POST(req: Request) {
         const mergedItems = mergeCartItems(orderResult, mealResult, data);
 
         // Correct prices: use real catalog prices instead of LLM-hallucinated ones
-        const catalogPriceMap = new Map<string, number>();
-        for (const p of productCatalog as Array<{ selling_unit_id: string; price: number }>) {
-          catalogPriceMap.set(p.selling_unit_id, p.price);
-        }
-        // Also use prices from order history as a fallback
-        for (const order of data.orders) {
-          for (const item of order.items) {
-            if (!catalogPriceMap.has(item.selling_unit_id) && item.price > 0) {
-              catalogPriceMap.set(item.selling_unit_id, item.price);
-            }
-          }
-        }
         for (const item of mergedItems) {
           const realPrice = catalogPriceMap.get(item.itemId);
           if (realPrice && realPrice > 0) {

@@ -1,8 +1,7 @@
 export { getOrqClient, invokeDeployment } from "./orq-client";
 export {
   traceAgentCall,
-  traceToolCall,
-  traceOrchestration,
+  traceAgentCallJSON,
   createSessionId,
 } from "./tracing";
 export type { TraceAgentCallOptions } from "./tracing";

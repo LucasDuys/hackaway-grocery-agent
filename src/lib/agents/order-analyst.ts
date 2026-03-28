@@ -12,13 +12,14 @@ import type { AnalysisResult, PicnicData, OrderAnalystOutput } from "@/types";
  */
 export async function runOrderAnalyst(
   analysis: AnalysisResult,
-  data: PicnicData
+  data: PicnicData,
+  budgetCents?: number | null
 ): Promise<OrderAnalystOutput> {
   try {
     const result = await generateObject({
       model: getModel("order-analyst"),
       schema: orderAnalystSchema,
-      system: buildOrderAnalystPrompt(analysis, data),
+      system: buildOrderAnalystPrompt(analysis, data, budgetCents),
       prompt:
         "Analyze the order history and recommend items for this week's shop.",
     });
