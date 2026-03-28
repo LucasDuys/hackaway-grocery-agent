@@ -15,16 +15,25 @@ interface PipelineStep {
   agents: AgentName[];
   /** Derive summary from activity log */
   summarize: (
-    agentStates: Record<AgentName, { status: AgentStatus; message: string }>,
+    agentStates: Record<AgentName, { status: AgentStatus; message: string; durationMs?: number }>,
     events: AgentEvent[]
   ) => string[];
 }
 
 interface PipelineViewProps {
-  agentStates: Record<AgentName, { status: AgentStatus; message: string }>;
+  agentStates: Record<AgentName, { status: AgentStatus; message: string; durationMs?: number }>;
   activityLog: AgentEvent[];
   handoffs?: AgentHandoff[];
   learningInsights?: string[];
+  totalDuration?: number | null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Formatting helpers                                                 */
+/* ------------------------------------------------------------------ */
+
+function formatDuration(ms: number): string {
+  return `${(ms / 1000).toFixed(1)}s`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -129,7 +138,7 @@ const pipelineSteps: PipelineStep[] = [
 
 function deriveStepStatus(
   step: PipelineStep,
-  agentStates: Record<AgentName, { status: AgentStatus; message: string }>
+  agentStates: Record<AgentName, { status: AgentStatus; message: string; durationMs?: number }>
 ): AgentStatus {
   const statuses = step.agents.map(
     (a) => agentStates[a]?.status ?? "pending"
@@ -141,6 +150,21 @@ function deriveStepStatus(
   return "pending";
 }
 
+/**
+ * Derive the duration for a pipeline step by taking the max duration
+ * across all agents in the step (since parallel agents overlap).
+ */
+function deriveStepDuration(
+  step: PipelineStep,
+  agentStates: Record<AgentName, { status: AgentStatus; message: string; durationMs?: number }>
+): number | undefined {
+  const durations = step.agents
+    .map((a) => agentStates[a]?.durationMs)
+    .filter((d): d is number => d !== undefined);
+  if (durations.length === 0) return undefined;
+  return Math.max(...durations);
+}
+
 /* ------------------------------------------------------------------ */
 /*  Timeline Bar                                                       */
 /* ------------------------------------------------------------------ */
@@ -148,9 +172,11 @@ function deriveStepStatus(
 function TimelineBar({
   steps,
   agentStates,
+  totalDuration,
 }: {
   steps: PipelineStep[];
-  agentStates: Record<AgentName, { status: AgentStatus; message: string }>;
+  agentStates: Record<AgentName, { status: AgentStatus; message: string; durationMs?: number }>;
+  totalDuration?: number | null;
 }) {
   const stepStatuses = steps.map((s) => deriveStepStatus(s, agentStates));
   const completedCount = stepStatuses.filter((s) => s === "complete").length;
@@ -161,6 +187,11 @@ function TimelineBar({
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
           Pipeline Progress
+          {totalDuration != null && (
+            <span className="ml-2 font-normal normal-case text-[var(--text-secondary)]">
+              Total: {formatDuration(totalDuration)}
+            </span>
+          )}
         </span>
         <span className="text-xs font-medium text-[var(--text-secondary)]">
           {completedCount} / {steps.length} steps
@@ -227,11 +258,13 @@ function StepCard({
   status,
   summaryLines,
   detailEvents,
+  durationMs,
 }: {
   step: PipelineStep;
   status: AgentStatus;
   summaryLines: string[];
   detailEvents: AgentEvent[];
+  durationMs?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -306,6 +339,11 @@ function StepCard({
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">
               {step.title}
+              {status === "complete" && durationMs != null && (
+                <span className="ml-1.5 font-normal text-xs text-[var(--text-muted)]">
+                  -- {formatDuration(durationMs)}
+                </span>
+              )}
             </h3>
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${cfg.pillBg} ${cfg.pillText}`}
@@ -460,7 +498,7 @@ function agentToStepIndex(agent: AgentName): number {
   return idx >= 0 ? idx : -1;
 }
 
-export function PipelineView({ agentStates, activityLog, handoffs = [], learningInsights = [] }: PipelineViewProps) {
+export function PipelineView({ agentStates, activityLog, handoffs = [], learningInsights = [], totalDuration }: PipelineViewProps) {
   const stepsWithData = useMemo(
     () =>
       pipelineSteps.map((step) => ({
@@ -470,6 +508,7 @@ export function PipelineView({ agentStates, activityLog, handoffs = [], learning
         detailEvents: activityLog.filter((e) =>
           step.agents.includes(e.agent)
         ),
+        durationMs: deriveStepDuration(step, agentStates),
       })),
     [agentStates, activityLog]
   );
@@ -490,16 +529,17 @@ export function PipelineView({ agentStates, activityLog, handoffs = [], learning
 
   return (
     <div className="flex h-full flex-col">
-      <TimelineBar steps={pipelineSteps} agentStates={agentStates} />
+      <TimelineBar steps={pipelineSteps} agentStates={agentStates} totalDuration={totalDuration} />
       <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 sm:py-4">
         <div className="mx-auto max-w-lg space-y-2 sm:space-y-3">
-          {stepsWithData.map(({ step, status, summaryLines, detailEvents }, i) => (
+          {stepsWithData.map(({ step, status, summaryLines, detailEvents, durationMs }, i) => (
             <div key={step.id}>
               <StepCard
                 step={step}
                 status={status}
                 summaryLines={summaryLines}
                 detailEvents={detailEvents}
+                durationMs={durationMs}
               />
               {/* Render handoff connectors after this step card */}
               {handoffsByStepIndex.get(i)?.map((h, j) => (

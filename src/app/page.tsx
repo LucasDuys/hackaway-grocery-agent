@@ -39,6 +39,7 @@ export default function Home() {
     setDemoMode,
     pipelineMode,
     learningInsights,
+    totalDuration,
     orchestrate,
     reset,
   } = useOrchestration();
@@ -229,7 +230,7 @@ export default function Home() {
               <div className="flex flex-1 flex-col overflow-hidden">
                 <DAGVisualization agentStates={agentStates} />
                 <div className="flex-1 overflow-hidden">
-                  <PipelineView agentStates={agentStates} activityLog={activityLog} handoffs={handoffs} learningInsights={learningInsights} />
+                  <PipelineView agentStates={agentStates} activityLog={activityLog} handoffs={handoffs} learningInsights={learningInsights} totalDuration={totalDuration} />
                 </div>
               </div>
             ) : (

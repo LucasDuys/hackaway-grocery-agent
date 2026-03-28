@@ -71,9 +71,10 @@ function sendAgentStatus(
   send: SSESend,
   agent: AgentName,
   status: AgentStatus,
-  message: string
+  message: string,
+  durationMs?: number
 ) {
-  send({ type: "agent-status", data: { agent, status, message } });
+  send({ type: "agent-status", data: { agent, status, message, durationMs } });
 }
 
 function sendAgentEvent(
@@ -167,12 +168,17 @@ export async function POST(req: Request) {
       const send = makeSend(controller, encoder);
 
       try {
+        const timings: Record<string, number> = {};
+        const startTotal = Date.now();
+
         // ---------------------------------------------------------------
         // Step 1: Parse user intent (LLM call)
         // ---------------------------------------------------------------
         sendAgentStatus(send, "orchestrator", "running", "Parsing your request...");
 
+        const t0Intent = Date.now();
         const intent = await parseIntent(input);
+        timings["orchestrator-parse"] = Date.now() - t0Intent;
 
         // ---------------------------------------------------------------
         // Load user preferences from memory
@@ -228,9 +234,11 @@ export async function POST(req: Request) {
           ...intent.specialRequests,
         ].filter(Boolean);
 
+        const t0Prefetch = Date.now();
         const data = await prefetchAll(
           searchQueries.length > 0 ? searchQueries : undefined
         );
+        timings["prefetch"] = Date.now() - t0Prefetch;
 
         sendAgentEvent(
           send,
@@ -238,7 +246,7 @@ export async function POST(req: Request) {
           "QUERY",
           `Loaded ${data.orders.length} orders, ${data.favorites.length} favorites, ${data.deliverySlots.length} delivery slots`
         );
-        sendAgentStatus(send, "prefetch", "complete", "Data ready");
+        sendAgentStatus(send, "prefetch", "complete", "Data ready", timings["prefetch"]);
 
         // ---------------------------------------------------------------
         // Step 3: Run analysis on order history (pure TypeScript, instant)
@@ -261,7 +269,9 @@ export async function POST(req: Request) {
         // means we need order analyst first OR pass an empty base cart for
         // parallel execution. We run order analyst first, then meal planner +
         // schedule in parallel for correctness.
+        const t0OrderAnalyst = Date.now();
         const orderResult = await runOrderAnalyst(analysis, data, intent.budget, preferencesContext);
+        timings["order-analyst"] = Date.now() - t0OrderAnalyst;
 
         // Send order analyst events
         for (const item of orderResult.recommendedItems.slice(0, 5)) {
@@ -290,7 +300,8 @@ export async function POST(req: Request) {
           send,
           "order-analyst",
           "complete",
-          `${orderResult.recommendedItems.length} items recommended`
+          `${orderResult.recommendedItems.length} items recommended`,
+          timings["order-analyst"]
         );
 
         // Handoff: Order Analyst -> Orchestrator
@@ -306,13 +317,26 @@ export async function POST(req: Request) {
         let mealResult: MealPlannerOutput;
         let scheduleResult: ScheduleAgentOutput;
 
+        const t0Parallel = Date.now();
         if (isAutoMode) {
           mealResult = { meals: [], additionalIngredients: [] };
+          timings["meal-planner"] = 0;
           scheduleResult = await runScheduleAgent(data, analysis);
+          timings["schedule-agent"] = Date.now() - t0Parallel;
         } else {
+          const t0Meal = Date.now();
+          const t0Schedule = Date.now();
+          const mealPromise = runMealPlanner(intent, data, orderResult, preferencesContext).then((r) => {
+            timings["meal-planner"] = Date.now() - t0Meal;
+            return r;
+          });
+          const schedulePromise = runScheduleAgent(data, analysis).then((r) => {
+            timings["schedule-agent"] = Date.now() - t0Schedule;
+            return r;
+          });
           [mealResult, scheduleResult] = await Promise.all([
-            runMealPlanner(intent, data, orderResult, preferencesContext),
-            runScheduleAgent(data, analysis),
+            mealPromise,
+            schedulePromise,
           ]);
         }
 
@@ -416,7 +440,8 @@ export async function POST(req: Request) {
           send,
           "meal-planner",
           "complete",
-          `${mealResult.meals.length} meals planned`
+          `${mealResult.meals.length} meals planned`,
+          timings["meal-planner"]
         );
 
         // Handoff: Meal Planner -> Budget Optimizer
@@ -451,7 +476,7 @@ export async function POST(req: Request) {
             }
           );
         }
-        sendAgentStatus(send, "schedule-agent", "complete", "Slot selected");
+        sendAgentStatus(send, "schedule-agent", "complete", "Slot selected", timings["schedule-agent"]);
 
         // Handoff: Schedule Agent -> Orchestrator
         if (scheduleResult.selectedSlot.slotId) {
@@ -532,8 +557,10 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------------
         // Step 6: Conditional budget optimizer
         // ---------------------------------------------------------------
+        const t0Budget = Date.now();
         if (totalCost <= budget) {
           // Under budget -- skip optimizer
+          timings["budget-optimizer"] = Date.now() - t0Budget;
           sendAgentEvent(
             send,
             "budget-optimizer",
@@ -547,7 +574,7 @@ export async function POST(req: Request) {
               totalSavings: 0,
             }
           );
-          sendAgentStatus(send, "budget-optimizer", "complete", "Within budget");
+          sendAgentStatus(send, "budget-optimizer", "complete", "Within budget", timings["budget-optimizer"]);
 
           // Handoff: Budget Optimizer -> Orchestrator (no changes needed)
           sendHandoff(
@@ -677,11 +704,13 @@ export async function POST(req: Request) {
                 totalSavings: savings,
               }
             );
+            timings["budget-optimizer"] = Date.now() - t0Budget;
             sendAgentStatus(
               send,
               "budget-optimizer",
               "complete",
-              `${substitutionCount} adjustment(s), ${centsToEur(savings)} saved`
+              `${substitutionCount} adjustment(s), ${centsToEur(savings)} saved`,
+              timings["budget-optimizer"]
             );
 
             // Handoff: Budget Optimizer -> Orchestrator
@@ -699,11 +728,13 @@ export async function POST(req: Request) {
               "APPROVE",
               `Budget optimizer unavailable -- proceeding with current cart at ${centsToEur(totalCost)}`
             );
+            timings["budget-optimizer"] = Date.now() - t0Budget;
             sendAgentStatus(
               send,
               "budget-optimizer",
               "complete",
-              "Skipped (module unavailable)"
+              "Skipped (module unavailable)",
+              timings["budget-optimizer"]
             );
           }
         }
@@ -760,7 +791,8 @@ export async function POST(req: Request) {
             deliveryWindow: cartSummary.deliverySlot?.timeWindow ?? null,
           }
         );
-        sendAgentStatus(send, "orchestrator", "complete", "Done");
+        timings["orchestrator"] = Date.now() - startTotal;
+        sendAgentStatus(send, "orchestrator", "complete", "Done", timings["orchestrator"]);
 
         // ---------------------------------------------------------------
         // Step 9: Derive and save preferences, send learning insights
@@ -812,6 +844,14 @@ export async function POST(req: Request) {
         send({
           type: "learning-insights",
           data: { insights, runCount: updatedPrefs.runCount },
+        });
+
+        send({
+          type: "timing-summary",
+          data: {
+            total: Date.now() - startTotal,
+            steps: timings,
+          },
         });
 
         sendDone(send);

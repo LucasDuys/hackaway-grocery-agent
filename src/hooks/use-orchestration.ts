@@ -12,7 +12,7 @@ import type {
 
 const DEFAULT_DEMO_MODE = false;
 
-type AgentStates = Record<AgentName, { status: AgentStatus; message: string }>;
+type AgentStates = Record<AgentName, { status: AgentStatus; message: string; durationMs?: number }>;
 
 const initialAgentStates: AgentStates = {
   prefetch: { status: "pending", message: "" },
@@ -125,6 +125,7 @@ export function useOrchestration() {
   const [pipelineMode, setPipelineMode] = useState<"auto" | "custom" | null>(null);
   const [handoffs, setHandoffs] = useState<AgentHandoff[]>([]);
   const [learningInsights, setLearningInsights] = useState<string[]>([]);
+  const [totalDuration, setTotalDuration] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -141,6 +142,7 @@ export function useOrchestration() {
     setMealPlan([]);
     setHandoffs([]);
     setLearningInsights([]);
+    setTotalDuration(null);
     setStreamedText("");
     setIsRunning(false);
     setError(null);
@@ -209,6 +211,7 @@ export function useOrchestration() {
     setMealPlan([]);
     setHandoffs([]);
     setLearningInsights([]);
+    setTotalDuration(null);
     setStreamedText("");
     setPipelineMode(null);
 
@@ -255,6 +258,7 @@ export function useOrchestration() {
                 [parsed.data.agent]: {
                   status: parsed.data.status,
                   message: parsed.data.message,
+                  durationMs: parsed.data.durationMs,
                 },
               }));
             } else if (parsed.type === "agent-event") {
@@ -284,6 +288,8 @@ export function useOrchestration() {
               setStreamedText((prev) => prev + (parsed.data.text ?? ""));
             } else if (parsed.type === "learning-insights") {
               setLearningInsights(parsed.data?.insights ?? []);
+            } else if (parsed.type === "timing-summary") {
+              setTotalDuration(parsed.data?.total ?? null);
             } else if (parsed.type === "error") {
               setError(parsed.data?.message ?? "Pipeline error");
             } else if (parsed.type === "done") {
@@ -327,6 +333,7 @@ export function useOrchestration() {
     setDemoMode,
     pipelineMode,
     learningInsights,
+    totalDuration,
     orchestrate,
     reset,
   };
