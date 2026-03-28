@@ -41,7 +41,6 @@ export async function runMealPlanner(
     ];
 
     const result = await generateObject({
-      mode: "tool",
       model: getModel("meal-planner"),
       schema: mealPlannerSchema,
       system: buildMealPlannerPrompt(

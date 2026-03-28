@@ -14,7 +14,6 @@ import type { ParsedIntent } from "@/types";
 export async function parseIntent(rawInput: string): Promise<ParsedIntent> {
   try {
     const result = await generateObject({
-      mode: "tool",
       model: getModel("meal-planner"),
       schema: parsedIntentSchema,
       system: `You are a grocery intent parser. Extract structured information from the user's natural-language request about their weekly grocery shop.

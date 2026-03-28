@@ -16,7 +16,6 @@ export async function runOrderAnalyst(
 ): Promise<OrderAnalystOutput> {
   try {
     const result = await generateObject({
-      mode: "tool",
       model: getModel("order-analyst"),
       schema: orderAnalystSchema,
       system: buildOrderAnalystPrompt(analysis, data),

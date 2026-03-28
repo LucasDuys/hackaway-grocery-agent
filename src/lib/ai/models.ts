@@ -66,7 +66,7 @@ export function getModel(agent: AgentRole) {
   // --- Try OpenRouter second ---
   if (hasOpenRouter()) {
     const or = getOpenRouter();
-    return or("openai/gpt-4.1-mini", { structuredOutputs: false });
+    return or("openai/gpt-4.1-mini");
   }
 
   // --- Try Anthropic third ---
