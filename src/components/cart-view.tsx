@@ -10,12 +10,12 @@ interface CartViewProps {
 
 type Category = "produce" | "dairy" | "proteins" | "pantry" | "other";
 
-const categoryMeta: Record<Category, { label: string; icon: string }> = {
-  produce: { label: "Produce", icon: "🥬" },
-  dairy: { label: "Dairy", icon: "🧀" },
-  proteins: { label: "Proteins", icon: "🥩" },
-  pantry: { label: "Pantry", icon: "🫙" },
-  other: { label: "Other", icon: "🛒" },
+const categoryMeta: Record<Category, { label: string }> = {
+  produce: { label: "Produce" },
+  dairy: { label: "Dairy" },
+  proteins: { label: "Proteins" },
+  pantry: { label: "Pantry" },
+  other: { label: "Other" },
 };
 
 const categoryOrder: Category[] = ["produce", "dairy", "proteins", "pantry", "other"];
@@ -98,7 +98,6 @@ export function CartView({ summary }: CartViewProps) {
           return (
             <div key={cat} className="mb-5">
               <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-[var(--text-primary)]">
-                <span>{meta.icon}</span>
                 {meta.label}
                 <span className="text-sm font-normal text-[var(--text-muted)]">
                   ({items.length})

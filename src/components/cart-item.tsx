@@ -2,6 +2,7 @@
 
 import type { CartItem as CartItemType } from "@/types";
 import { ReasoningChip } from "./reasoning-chip";
+import { getPicnicImageUrl } from "@/lib/picnic/image";
 
 interface CartItemProps {
   item: CartItemType;
@@ -30,12 +31,17 @@ export function CartItemRow({ item }: CartItemProps) {
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-muted)] text-sm text-[var(--text-muted)]">
         {item.imageUrl ? (
           <img
-            src={item.imageUrl}
+            src={getPicnicImageUrl(item.imageUrl) || item.imageUrl}
             alt={item.name}
             className="h-10 w-10 rounded-md object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+              (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
+            }}
           />
-        ) : (
-          <span className="text-lg">🛒</span>
+        ) : null}
+        {!item.imageUrl && (
+          <span className="text-xs font-medium">{item.name.charAt(0).toUpperCase()}</span>
         )}
       </div>
 

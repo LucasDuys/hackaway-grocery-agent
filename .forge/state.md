@@ -20,7 +20,7 @@ blocked: []
 | T005 | idle | A | | |
 | T006 | idle | D | | |
 | T007 | idle | A | | |
-| T008 | idle | A | | |
+| T008 | complete | A | | 663a78f |
 | T009 | idle | A | | |
 | T010 | idle | A | | |
 | T011 | idle | D | | |
