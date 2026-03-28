@@ -17,6 +17,7 @@
   --agent-schedule: #0ea5e9;
   --agent-budget: #f59e0b;
   --agent-orchestrator: #10b981;
+  --agent-prefetch: #94a3b8;
 }
 
 body {
@@ -39,4 +40,21 @@ body {
 
 .feed-entry {
   animation: slide-up 0.25s ease-out both;
+}
+
+/* DAG node pulse animation for running state */
+@keyframes dag-pulse-ring {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+.dag-pulse {
+  animation: dag-pulse-ring 1.5s ease-in-out infinite;
 }
