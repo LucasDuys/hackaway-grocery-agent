@@ -7,6 +7,7 @@ import { prefetchAll } from "@/lib/picnic/prefetch";
 import { runFullAnalysis } from "@/lib/analysis";
 import { buildOrchestratorPrompt } from "@/lib/prompts/orchestrator";
 import { getModel } from "@/lib/ai/models";
+import productCatalog from "@/data/product-catalog.json";
 import type {
   CartItem,
   CartSummary,
@@ -16,6 +17,7 @@ import type {
   AgentName,
   AgentStatus,
   ActionType,
+  PicnicProduct,
 } from "@/types";
 
 export const maxDuration = 60;
@@ -304,8 +306,17 @@ export async function POST(req: Request) {
               "@/lib/agents/budget-optimizer"
             );
 
-            // Build alternatives map from search results + favorites
+            // Build alternatives map from search results + favorites + product catalog
             const alternatives = buildAlternativesMap(mergedItems, data);
+
+            // Build item priority map from analysis classifications
+            const itemPriorities = new Map<
+              string,
+              "staple" | "regular" | "occasional" | "one-time"
+            >();
+            for (const classification of analysis.classifications) {
+              itemPriorities.set(classification.itemId, classification.category);
+            }
 
             const cartItemInputs = mergedItems.map((item) => ({
               itemId: item.itemId,
@@ -318,24 +329,39 @@ export async function POST(req: Request) {
             budgetOptimizerResult = await runBudgetOptimizer(
               cartItemInputs,
               budget,
-              alternatives
+              alternatives,
+              itemPriorities
             );
 
-            // Send substitution events
+            // Send events for each adjustment
             for (const adj of budgetOptimizerResult.adjustments) {
-              sendAgentEvent(
-                send,
-                "budget-optimizer",
-                "SUBSTITUTE",
-                `${adj.original.name} (${centsToEur(adj.original.price)}) -> ${adj.replacement.name} (${centsToEur(adj.replacement.price)}) -- saves ${centsToEur(adj.savings)}`
-              );
+              const isRemoval = adj.replacement.price === 0;
+              if (isRemoval) {
+                sendAgentEvent(
+                  send,
+                  "budget-optimizer",
+                  "REJECT",
+                  `Removed ${adj.original.name} -- ${centsToEur(adj.savings)} saved`
+                );
+              } else {
+                sendAgentEvent(
+                  send,
+                  "budget-optimizer",
+                  "SUBSTITUTE",
+                  `${adj.original.name} (${centsToEur(adj.original.price)}) -> ${adj.replacement.name} (${centsToEur(adj.replacement.price)}) -- saves ${centsToEur(adj.savings)}`
+                );
+              }
             }
 
             // Apply adjustments to the merged items
             applyBudgetAdjustments(mergedItems, budgetOptimizerResult);
 
-            totalCost = budgetOptimizerResult.optimizedTotal;
-            savings = budgetOptimizerResult.originalTotal - budgetOptimizerResult.optimizedTotal;
+            // Recalculate total from actual items instead of trusting LLM
+            totalCost = mergedItems.reduce(
+              (sum, item) => sum + item.price * item.quantity,
+              0
+            );
+            savings = budgetOptimizerResult.originalTotal - totalCost;
             substitutionCount = budgetOptimizerResult.adjustments.length;
 
             sendAgentEvent(
@@ -348,7 +374,7 @@ export async function POST(req: Request) {
               send,
               "budget-optimizer",
               "complete",
-              `${substitutionCount} substitution(s), ${centsToEur(savings)} saved`
+              `${substitutionCount} adjustment(s), ${centsToEur(savings)} saved`
             );
           } catch (err) {
             console.error("Budget optimizer unavailable:", err);
@@ -528,7 +554,9 @@ function mergeCartItems(
 
 /**
  * Build a map of alternative products for each cart item.
- * Uses search results + favorites as potential alternatives.
+ * Uses the product catalog, search results, and favorites as sources.
+ * Matches by extracting the primary keyword from the product name and
+ * finding other products of the same general type at a lower price.
  */
 function buildAlternativesMap(
   cartItems: CartItem[],
@@ -542,33 +570,69 @@ function buildAlternativesMap(
     Array<{ itemId: string; name: string; price: number }>
   >();
 
-  // Collect all available products from search results + favorites
+  // Collect all available products from catalog + search results + favorites
   const allProducts: Array<{
     selling_unit_id: string;
     name: string;
     price: number;
   }> = [
+    ...(productCatalog as PicnicProduct[]),
     ...data.favorites,
     ...Object.values(data.searchResults).flat(),
   ];
 
-  // For each cart item, find products with similar names that are cheaper
-  for (const item of cartItems) {
-    const itemNameLower = item.name.toLowerCase();
-    const keywords = itemNameLower.split(/\s+/).filter((w) => w.length > 2);
+  // Deduplicate by selling_unit_id
+  const productMap = new Map<string, { selling_unit_id: string; name: string; price: number }>();
+  for (const p of allProducts) {
+    if (!productMap.has(p.selling_unit_id)) {
+      productMap.set(p.selling_unit_id, p);
+    }
+  }
+  const uniqueProducts = Array.from(productMap.values());
 
-    const matches = allProducts
+  // Common Dutch/English stop words to skip when extracting keywords
+  const stopWords = new Set([
+    "de", "het", "een", "van", "en", "in", "op", "met", "voor",
+    "the", "a", "an", "of", "and", "in", "on", "with", "for",
+    "ah", "jumbo", "plus", "biologisch", "organic", "bio",
+    "mijn", "vers", "verse",
+  ]);
+
+  /**
+   * Extract meaningful keywords from a product name for category matching.
+   * Returns the first 1-2 meaningful words that identify the product type.
+   */
+  function extractKeywords(name: string): string[] {
+    const words = name
+      .toLowerCase()
+      .replace(/[0-9]+[gml]*/g, "") // Remove quantities like "500g", "1l"
+      .split(/[\s\-\/]+/)
+      .filter((w) => w.length > 2 && !stopWords.has(w));
+    // Return the first two meaningful words as category identifiers
+    return words.slice(0, 2);
+  }
+
+  for (const item of cartItems) {
+    const itemKeywords = extractKeywords(item.name);
+    if (itemKeywords.length === 0) continue;
+
+    const matches = uniqueProducts
       .filter((p) => {
         if (p.selling_unit_id === item.itemId) return false;
+        if (p.price >= item.price) return false; // only cheaper alternatives
         const pNameLower = p.name.toLowerCase();
-        // Match if at least one keyword overlaps
-        return keywords.some((kw) => pNameLower.includes(kw));
+        // Match if the primary keyword (first meaningful word) appears in the product name
+        return itemKeywords.some((kw) => pNameLower.includes(kw));
       })
       .map((p) => ({
         itemId: p.selling_unit_id,
         name: p.name,
         price: p.price,
-      }));
+      }))
+      // Sort by price ascending so cheapest alternatives come first
+      .sort((a, b) => a.price - b.price)
+      // Limit to top 5 alternatives per item to keep the prompt manageable
+      .slice(0, 5);
 
     if (matches.length > 0) {
       alternatives.set(item.itemId, matches);
@@ -580,24 +644,48 @@ function buildAlternativesMap(
 
 /**
  * Apply budget optimizer adjustments to the merged cart items in-place.
+ * Handles both substitutions (replacement with different item) and removals
+ * (replacement price === 0).
  */
 function applyBudgetAdjustments(
   items: CartItem[],
   result: BudgetOptimizerOutput
 ): void {
+  // Process removals after substitutions to avoid index shifting issues
+  const toRemove: string[] = [];
+
   for (const adj of result.adjustments) {
     const idx = items.findIndex((item) => item.itemId === adj.original.itemId);
     if (idx === -1) continue;
 
-    items[idx] = {
-      ...items[idx],
-      itemId: adj.replacement.itemId,
-      name: adj.replacement.name,
-      price: adj.replacement.price,
-      reasonTag: "substitution",
-      reasoning: adj.reasoning,
-      agentSource: "budget-optimizer",
-      diffStatus: "substituted",
-    };
+    if (adj.replacement.price === 0) {
+      // Mark for removal
+      toRemove.push(adj.original.itemId);
+      items[idx] = {
+        ...items[idx],
+        reasoning: adj.reasoning,
+        agentSource: "budget-optimizer",
+        diffStatus: "removed",
+      };
+    } else {
+      // Substitution
+      items[idx] = {
+        ...items[idx],
+        itemId: adj.replacement.itemId,
+        name: adj.replacement.name,
+        price: adj.replacement.price,
+        reasonTag: "substitution",
+        reasoning: adj.reasoning,
+        agentSource: "budget-optimizer",
+        diffStatus: "substituted",
+      };
+    }
+  }
+
+  // Remove items marked for removal (iterate in reverse to preserve indices)
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (toRemove.includes(items[i].itemId) && items[i].diffStatus === "removed") {
+      items.splice(i, 1);
+    }
   }
 }

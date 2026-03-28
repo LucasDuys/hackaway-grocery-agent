@@ -15,14 +15,27 @@ interface ProductAlternative {
 export function buildBudgetOptimizerPrompt(
   cart: CartItemForBudget[],
   budget: number,
-  alternatives: ProductAlternative[]
+  alternatives: ProductAlternative[],
+  itemPriorities?: Record<string, string>
 ): string {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const prioritySection = itemPriorities && Object.keys(itemPriorities).length > 0
+    ? `<item_priorities>${JSON.stringify(
+        cart.map((item) => ({
+          itemId: item.itemId,
+          name: item.name,
+          priority: itemPriorities[item.itemId] ?? "regular",
+        })),
+        null,
+        2
+      )}</item_priorities>`
+    : "";
 
   return `
 <identity>
 You are the Budget Optimizer, a specialized agent in a grocery orchestration system.
-Your role is the most critical in the pipeline: when the cart exceeds the budget, you must produce detailed, per-item substitution reasoning that shows the user exactly how and why each swap saves money without sacrificing quality.
+Your role is the most critical in the pipeline: when the cart exceeds the budget, you must produce detailed, per-item reasoning that shows the user exactly how and why each change saves money without sacrificing quality.
 This is the key demo moment -- your reasoning must be transparent, specific, and compelling.
 </identity>
 
@@ -36,23 +49,37 @@ This is the key demo moment -- your reasoning must be transparent, specific, and
     original: { id: a.original.selling_unit_id, name: a.original.name, price: a.original.price },
     alternatives: a.alternatives.map((alt) => ({ id: alt.selling_unit_id, name: alt.name, price: alt.price, unit: alt.unit_quantity })),
   })), null, 2)}</product_alternatives>
+${prioritySection}
 </context>
 
 <instructions>
+You have two tools to bring the cart under budget:
+- SUBSTITUTE: Replace an item with a cheaper alternative from the product_alternatives list.
+- REMOVE: Drop an item entirely. Set the replacement price to 0 and append "(REMOVED)" to the replacement name. Use the same itemId for both original and replacement.
+
+Priority order for removal: one-time items first, then occasional, then regular. NEVER remove staple items.
+
+Your optimizedTotal MUST be at or below the budget. If substitution alone cannot achieve this, remove items.
+
 1. Calculate the total cart cost and compare against the budget target.
 2. If the cart is within budget, approve it with no adjustments. Set approved: true.
-3. If the cart exceeds budget, you MUST find substitutions to bring the total at or under budget:
-   a. Sort items by potential savings (most expensive items with cheaper alternatives first).
+3. If the cart exceeds budget, you MUST bring the total at or under budget:
+   a. First, apply SUBSTITUTIONS: sort items by potential savings (most expensive items with cheaper alternatives first).
    b. For each substitution, write a detailed "reasoning" field that explains:
       - What the original item costs and what the replacement costs
       - The per-unit or per-kg price comparison if unit sizes differ
       - Why this substitution is acceptable (e.g. "store brand vs name brand, same ingredients")
       - How much this single swap saves
-   c. Keep substituting until the optimized total is at or under budget.
-   d. Prefer swapping name-brand for store-brand over reducing quantities.
-   e. Prefer reducing quantity of occasional items over removing staples entirely.
-4. Set approved: false if substitutions were needed (the cart was modified).
-5. Report originalTotal and optimizedTotal in cents.
+   c. If substitutions alone are not enough, REMOVE items starting from the lowest priority:
+      - Remove one-time items first
+      - Then occasional items
+      - Then regular items
+      - NEVER remove staple items
+   d. For each removal, write reasoning like: "Removed [item] ([priority] purchase) to meet EUR X budget. Savings: EUR Y."
+   e. Continue until the optimized total is at or under budget.
+   f. Prefer swapping name-brand for store-brand over removing items.
+4. Set approved: false if any adjustments were needed (the cart was modified).
+5. Report originalTotal and optimizedTotal in cents. The optimizedTotal MUST be at or below budget_target_cents.
 6. All data you need is provided above. Do NOT make tool calls. Reason from the data only.
 </instructions>
 
