@@ -207,6 +207,17 @@ export interface CartSummary {
   mode?: "auto" | "custom";
 }
 
+// === Dietary Restrictions ===
+
+export type DietaryRestriction =
+  | "vegetarian"
+  | "vegan"
+  | "gluten-free"
+  | "lactose-free"
+  | "low-sugar"
+  | "halal"
+  | "nut-free";
+
 // === User Intent ===
 
 export interface ParsedIntent {
@@ -215,6 +226,7 @@ export interface ParsedIntent {
   guestEvents: Array<{ day: string; guestCount: number; description: string }>;
   budget: number | null; // cents, null = no explicit budget
   specialRequests: string[];
+  dietaryRestrictions?: DietaryRestriction[];
 }
 
 // === Preference Memory Types ===
@@ -235,6 +247,7 @@ export interface Preferences {
     preferredDay: string | null; // e.g. "Monday"
     preferredTimeWindow: string | null; // e.g. "18:00 - 21:00"
   };
+  dietaryRestrictions?: DietaryRestriction[];
   neverSuggest: string[]; // item IDs the user removed
   alwaysInclude: string[]; // item IDs confirmed as staples
   runCount: number;

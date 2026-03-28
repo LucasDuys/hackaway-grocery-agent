@@ -1,9 +1,36 @@
 {
-  "brandPreferences": [],
-  "budgetPatterns": { "averageBudget": 0, "lastStatedBudget": null, "typicalSpend": 0 },
-  "deliveryPreferences": { "preferredDay": null, "preferredTimeWindow": null },
+  "brandPreferences": [
+    {
+      "category": "Swapping to the smaller pack of Starbucks Blonde Espresso Roast koffiebonen saves €25.58. Both are the same coffee, but the 1399 cent option is a smaller package, which fits the budget much better while covering your immediate needs.",
+      "preferred": "Starbucks Blonde Espresso Roast koffiebonen",
+      "rejected": "Starbucks Blonde Espresso Roast koffiebonen",
+      "learnedAt": "2026-03-28T13:08:58.776Z"
+    },
+    {
+      "category": "Switching to the 389 cent pack of the same Campina Botergoud gezouten roomboter saves €10.47. It's the same product/brand—just a smaller or more value-oriented format.",
+      "preferred": "Campina Botergoud gezouten roomboter",
+      "rejected": "Campina Botergoud gezouten roomboter",
+      "learnedAt": "2026-03-28T13:08:58.776Z"
+    },
+    {
+      "category": "Swapping your 583 cent Le Petit Moulin boerenbrood for the 203 cent variant (same type, cheaper format/package) saves €3.80 per loaf. This is a direct switch within the same product line for significant savings.",
+      "preferred": "Le Petit Moulin boerenbrood volkoren donker meergranen",
+      "rejected": "Le Petit Moulin boerenbrood volkoren donker meergranen",
+      "learnedAt": "2026-03-28T13:08:58.776Z"
+    }
+  ],
+  "budgetPatterns": {
+    "averageBudget": 10053,
+    "lastStatedBudget": 6000,
+    "typicalSpend": 14650
+  },
+  "deliveryPreferences": {
+    "preferredDay": "Monday",
+    "preferredTimeWindow": "18:00 - 21:00"
+  },
+  "dietaryRestrictions": [],
   "neverSuggest": [],
   "alwaysInclude": [],
-  "runCount": 0,
-  "lastRunAt": ""
+  "runCount": 3,
+  "lastRunAt": "2026-03-28T13:16:36.870Z"
 }

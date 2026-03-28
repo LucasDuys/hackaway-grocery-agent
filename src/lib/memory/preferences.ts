@@ -27,6 +27,7 @@ export function getDefaultPreferences(): Preferences {
       preferredDay: null,
       preferredTimeWindow: null,
     },
+    dietaryRestrictions: [],
     neverSuggest: [],
     alwaysInclude: [],
     runCount: 0,
@@ -130,6 +131,13 @@ export function derivePreferences(
     }
   }
 
+  // --- Dietary restrictions ---
+  // Use intent restrictions if provided, otherwise preserve existing
+  const dietaryRestrictions =
+    intent.dietaryRestrictions && intent.dietaryRestrictions.length > 0
+      ? [...intent.dietaryRestrictions]
+      : [...(existingPrefs.dietaryRestrictions ?? [])];
+
   return {
     brandPreferences,
     budgetPatterns,
@@ -137,6 +145,7 @@ export function derivePreferences(
       preferredDay,
       preferredTimeWindow,
     },
+    dietaryRestrictions,
     neverSuggest: [...existingPrefs.neverSuggest],
     alwaysInclude: [...existingPrefs.alwaysInclude],
     runCount: previousRuns + 1,
@@ -197,6 +206,11 @@ export function formatPreferencesForPrompt(prefs: Preferences): string {
   // Always include
   if (prefs.alwaysInclude.length > 0) {
     lines.push(`- Always include: ${prefs.alwaysInclude.join(", ")}`);
+  }
+
+  // Dietary restrictions
+  if (prefs.dietaryRestrictions && prefs.dietaryRestrictions.length > 0) {
+    lines.push(`- Dietary restrictions: ${prefs.dietaryRestrictions.join(", ")}`);
   }
 
   lines.push("</preferences>");

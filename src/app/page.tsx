@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { AnimatePresence } from "motion/react";
 import { Header } from "@/components/header";
+import { DietaryFilter } from "@/components/dietary-filter";
 import { SplitPanelLayout } from "@/components/split-panel-layout";
 import { CartView } from "@/components/cart-view";
 import { AgentStatusPanel } from "@/components/agent-status-panel";
@@ -13,12 +14,14 @@ import { PipelineView } from "@/components/pipeline-view";
 import { MealPlanSummary } from "@/components/meal-plan-summary";
 import { ProactiveNotification } from "@/components/proactive-notification";
 import { useOrchestration } from "@/hooks/use-orchestration";
+import type { DietaryRestriction } from "@/types";
 import mockOrders from "@/data/mock-orders.json";
 
 export default function Home() {
   const [isTransparencyMode, setIsTransparencyMode] = useState(true);
   const [rightTab, setRightTab] = useState<"pipeline" | "feed">("pipeline");
   const [notificationDismissed, setNotificationDismissed] = useState(false);
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<DietaryRestriction[]>([]);
 
   const daysSinceLastOrder = useMemo(() => {
     const deliveryTimes = mockOrders.map((o) => o.delivery_time);
@@ -167,6 +170,12 @@ export default function Home() {
                 </p>
               </div>
             )}
+
+            {/* Dietary preferences */}
+            <DietaryFilter
+              selected={dietaryRestrictions}
+              onChange={setDietaryRestrictions}
+            />
 
             {/* Input bar */}
             <InputBar
