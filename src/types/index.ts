@@ -51,6 +51,7 @@ export interface PicnicRecipe {
   id: string;
   name: string;
   portions: number;
+  imageUrl?: string;
   ingredients: Array<{
     selling_unit_id: string;
     name: string;

@@ -20,6 +20,7 @@ export default function Home() {
     agentStates,
     activityLog,
     cartSummary,
+    mealPlan,
     isRunning,
     error,
     demoMode,
@@ -35,31 +36,30 @@ export default function Home() {
     "Sort this week's shop, friends Saturday, keep it healthy",
   ];
 
-  // Extract meal plan data from activity log (meal-planner SUGGEST events)
+  // Use structured meal plan data from SSE, fall back to parsed events for demo mode
   const mealPlanData = useMemo(() => {
+    if (mealPlan.length > 0) return mealPlan;
+
+    // Fallback: parse activity log for demo mode
     const mealEvents = activityLog.filter(
       (e) => e.agent === "meal-planner" && e.action === "SUGGEST"
     );
     return mealEvents.map((e) => {
-      // Parse "Monday: Pasta Carbonara -- adding spinach + eggs + penne"
       const colonIdx = e.message.indexOf(":");
       const day = colonIdx > -1 ? e.message.slice(0, colonIdx).trim() : "Day";
       const rest = colonIdx > -1 ? e.message.slice(colonIdx + 1).trim() : e.message;
       const dashIdx = rest.indexOf("--");
       const mealName = dashIdx > -1 ? rest.slice(0, dashIdx).trim() : rest.trim();
-      // Count ingredients mentioned after "adding"
       const addingIdx = rest.toLowerCase().indexOf("adding");
       let ingredientCount = 0;
       if (addingIdx > -1) {
         const ingredientStr = rest.slice(addingIdx + 6).trim();
-        // Split by " + " or ", " to count
         ingredientCount = ingredientStr.split(/\s*[+,]\s*/).filter(Boolean).length;
       }
-      // Estimate cost from cart items with recipe tag for this meal if available
-      const estimatedCost = ingredientCount * 250; // rough estimate: 250 cents per ingredient
+      const estimatedCost = ingredientCount * 250;
       return { day, mealName, ingredientCount, estimatedCost };
     });
-  }, [activityLog]);
+  }, [mealPlan, activityLog]);
 
   const pipelineStatus = isRunning
     ? "Agents working..."

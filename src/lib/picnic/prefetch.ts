@@ -239,16 +239,21 @@ function normalizeSlots(
 function normalizeRecipes(
   raw: NonNullable<RawSearchRecipesResponse["recipes"]>
 ): PicnicRecipe[] {
-  return raw.map((r) => ({
-    id: r.id,
-    name: r.name,
-    portions: r.portions,
-    ingredients: r.ingredients.map((i) => ({
-      selling_unit_id: i.selling_unit_id,
-      name: i.name,
-      quantity: i.quantity,
-    })),
-  }));
+  return raw.map((r) => {
+    // Extract primary image hash from recipe images array
+    const primaryImage = r.images?.images?.find((img) => img.primary) ?? r.images?.images?.[0];
+    return {
+      id: r.id,
+      name: r.name,
+      portions: r.portions,
+      imageUrl: primaryImage?.id,
+      ingredients: r.ingredients.map((i) => ({
+        selling_unit_id: i.selling_unit_id,
+        name: i.name,
+        quantity: i.quantity,
+      })),
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------

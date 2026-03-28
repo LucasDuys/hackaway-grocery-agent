@@ -104,11 +104,20 @@ const demoCartSummary: CartSummary = {
   },
 };
 
+export interface MealPlanCard {
+  day: string;
+  mealName: string;
+  ingredientCount: number;
+  estimatedCost: number;
+  imageUrl?: string;
+}
+
 export function useOrchestration() {
   const [demoMode, setDemoMode] = useState(DEFAULT_DEMO_MODE);
   const [agentStates, setAgentStates] = useState<AgentStates>({ ...initialAgentStates });
   const [activityLog, setActivityLog] = useState<AgentEvent[]>([]);
   const [cartSummary, setCartSummary] = useState<CartSummary | null>(null);
+  const [mealPlan, setMealPlan] = useState<MealPlanCard[]>([]);
   const [streamedText, setStreamedText] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +135,7 @@ export function useOrchestration() {
     setAgentStates({ ...initialAgentStates });
     setActivityLog([]);
     setCartSummary(null);
+    setMealPlan([]);
     setStreamedText("");
     setIsRunning(false);
     setError(null);
@@ -191,6 +201,7 @@ export function useOrchestration() {
     setActivityLog([]);
     setAgentStates({ ...initialAgentStates });
     setCartSummary(null);
+    setMealPlan([]);
     setStreamedText("");
     setPipelineMode(null);
 
@@ -250,6 +261,8 @@ export function useOrchestration() {
               setActivityLog((prev) => [...prev, agentEvent]);
             } else if (parsed.type === "mode") {
               setPipelineMode(parsed.data.mode);
+            } else if (parsed.type === "meal-plan") {
+              setMealPlan(parsed.data as MealPlanCard[]);
             } else if (parsed.type === "cart-summary") {
               setCartSummary(parsed.data);
             } else if (parsed.type === "streamed-text") {
@@ -288,6 +301,7 @@ export function useOrchestration() {
     agentStates,
     activityLog,
     cartSummary,
+    mealPlan,
     streamedText,
     isRunning,
     error,

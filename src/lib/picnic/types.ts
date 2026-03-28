@@ -79,6 +79,14 @@ export interface RawSearchRecipesResponse {
     id: string;
     name: string;
     portions: number;
+    images?: {
+      images?: Array<{
+        id: string;
+        type?: string;
+        namespace?: string;
+        primary?: boolean;
+      }>;
+    };
     ingredients: Array<{
       selling_unit_id: string;
       name: string;

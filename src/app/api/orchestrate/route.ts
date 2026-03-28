@@ -311,6 +311,14 @@ export async function POST(req: Request) {
           meal.estimatedCost = realCost;
         }
 
+        // Build a map from recipe name to recipe image for meal cards
+        const recipeImageMap = new Map<string, string>();
+        for (const recipe of data.recipes) {
+          if (recipe.imageUrl) {
+            recipeImageMap.set(recipe.name.toLowerCase(), recipe.imageUrl);
+          }
+        }
+
         // Send meal planner events
         for (const meal of mealResult.meals) {
           const ingredientNames = meal.ingredients
@@ -324,6 +332,32 @@ export async function POST(req: Request) {
             `${meal.day}: ${meal.mealName} -- adding ${ingredientNames}${meal.ingredients.length > 3 ? ` +${meal.ingredients.length - 3} more` : ""}`
           );
         }
+
+        // Send structured meal plan data (with images and real costs)
+        send({
+          type: "meal-plan",
+          data: mealResult.meals.map((meal) => {
+            // Try exact recipe name match, then fuzzy match
+            let imageUrl = recipeImageMap.get(meal.mealName.toLowerCase());
+            if (!imageUrl) {
+              const mealWords = meal.mealName.toLowerCase().split(/\s+/);
+              for (const [recipeName, img] of recipeImageMap.entries()) {
+                if (mealWords.some((w) => w.length > 3 && recipeName.includes(w))) {
+                  imageUrl = img;
+                  break;
+                }
+              }
+            }
+            return {
+              day: meal.day,
+              mealName: meal.mealName,
+              ingredientCount: meal.ingredients.length,
+              estimatedCost: meal.estimatedCost,
+              imageUrl,
+            };
+          }),
+        });
+
         sendAgentStatus(
           send,
           "meal-planner",
@@ -347,14 +381,34 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------------
         const mergedItems = mergeCartItems(orderResult, mealResult, data);
 
-        // Correct prices: use real catalog prices instead of LLM-hallucinated ones
+        // Correct prices and set images: use real catalog data instead of LLM-hallucinated values
         for (const item of mergedItems) {
-          const realPrice = catalogPriceMap.get(item.itemId);
-          if (realPrice && realPrice > 0) {
-            item.price = realPrice;
+          const catalogProduct = (productCatalog as Array<{ selling_unit_id: string; price: number; image_url?: string }>).find(
+            (p) => p.selling_unit_id === item.itemId
+          );
+          if (catalogProduct) {
+            if (catalogProduct.price > 0) {
+              item.price = catalogProduct.price;
+            }
+            if (catalogProduct.image_url) {
+              item.imageUrl = catalogProduct.image_url;
+            }
           } else if (item.price <= 0) {
             // If no catalog price and LLM returned 0, estimate from similar items
             item.price = 299; // EUR 2.99 default for unknown items
+          }
+
+          // Fall back to order history for images
+          if (!item.imageUrl) {
+            for (const order of data.orders) {
+              const historyItem = order.items.find(
+                (i) => i.selling_unit_id === item.itemId
+              );
+              if (historyItem?.image_url) {
+                item.imageUrl = historyItem.image_url;
+                break;
+              }
+            }
           }
         }
 
