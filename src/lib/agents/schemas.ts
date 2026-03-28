@@ -16,7 +16,7 @@ const reasonTagSchema = z.enum([
 const recommendationSchema = z.object({
   itemId: z.string(),
   name: z.string(),
-  score: z.number().min(0).max(1),
+  score: z.number().min(0).max(100),
   reason: z.string(),
   reasonTag: reasonTagSchema,
   suggestedQuantity: z.number().int().min(1),

@@ -1,12 +1,9 @@
-import { streamText } from "ai";
 import { parseIntent } from "@/lib/agents/intent-parser";
 import { runOrderAnalyst } from "@/lib/agents/order-analyst";
 import { runMealPlanner } from "@/lib/agents/meal-planner";
 import { runScheduleAgent } from "@/lib/agents/schedule-agent";
 import { prefetchAll } from "@/lib/picnic/prefetch";
 import { runFullAnalysis } from "@/lib/analysis";
-import { buildOrchestratorPrompt } from "@/lib/prompts/orchestrator";
-import { getModel } from "@/lib/ai/models";
 import productCatalog from "@/data/product-catalog.json";
 import type {
   CartItem,
@@ -86,10 +83,6 @@ function sendAgentEvent(
 
 function sendCartSummary(send: SSESend, cart: CartSummary) {
   send({ type: "cart-summary", data: cart });
-}
-
-function sendStreamedText(send: SSESend, text: string) {
-  send({ type: "streamed-text", data: { text } });
 }
 
 function sendDone(send: SSESend) {
@@ -418,7 +411,25 @@ export async function POST(req: Request) {
         }
 
         // ---------------------------------------------------------------
-        // Step 7: Build cart summary and stream final text
+        // Step 7: ABSOLUTE FINAL BUDGET CHECK -- recalculate from actual
+        // items and remove until under budget if needed
+        // ---------------------------------------------------------------
+        totalCost = mergedItems.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+        while (totalCost > budget && mergedItems.length > 0) {
+          // Remove the last non-staple item
+          const removableIdx = mergedItems.findLastIndex(
+            (i) => i.reasonTag !== "repeat"
+          );
+          if (removableIdx === -1) break;
+          const removed = mergedItems.splice(removableIdx, 1)[0];
+          totalCost -= removed.price * removed.quantity;
+        }
+
+        // ---------------------------------------------------------------
+        // Step 8: Build cart summary and send finalization event
         // ---------------------------------------------------------------
         const cartSummary: CartSummary = {
           items: mergedItems,
@@ -434,35 +445,15 @@ export async function POST(req: Request) {
 
         sendCartSummary(send, cartSummary);
 
-        // Stream orchestrator summary text
-        sendAgentStatus(send, "orchestrator", "running", "Finalizing cart...");
-
-        const orchestratorPrompt = buildOrchestratorPrompt({
-          orderAnalyst: orderResult,
-          mealPlanner: mealResult,
-          budgetOptimizer: budgetOptimizerResult ?? {
-            approved: true,
-            originalTotal: totalCost,
-            optimizedTotal: totalCost,
-            adjustments: [],
-          },
-          scheduleAgent: scheduleResult,
-        });
-
-        const result = streamText({
-          model: getModel("orchestrator"),
-          prompt: orchestratorPrompt,
-        });
-
-        for await (const chunk of result.textStream) {
-          sendStreamedText(send, chunk);
-        }
-
+        // Just send the delivery info, no text summary needed
         sendAgentEvent(
           send,
           "orchestrator",
           "APPROVE",
-          `Cart finalized: ${mergedItems.length} items, ${centsToEur(totalCost)}${cartSummary.deliverySlot ? `, delivery ${cartSummary.deliverySlot.date} ${cartSummary.deliverySlot.timeWindow}` : ""}`
+          `Cart finalized: ${mergedItems.length} items, ${centsToEur(totalCost)}` +
+            (cartSummary.deliverySlot
+              ? `, delivery ${cartSummary.deliverySlot.date} ${cartSummary.deliverySlot.timeWindow}`
+              : "")
         );
         sendAgentStatus(send, "orchestrator", "complete", "Done");
 
@@ -573,7 +564,19 @@ function mergeCartItems(
     }
   }
 
-  return Array.from(itemMap.values());
+  // Deduplicate by name: LLM might use different IDs for the same product
+  const nameMap = new Map<string, CartItem>();
+  for (const item of itemMap.values()) {
+    const normalized = item.name.toLowerCase().trim();
+    const existing = nameMap.get(normalized);
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      nameMap.set(normalized, item);
+    }
+  }
+
+  return Array.from(nameMap.values());
 }
 
 /**

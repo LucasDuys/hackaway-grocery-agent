@@ -42,7 +42,7 @@ You reason about behavioral evidence -- not raw statistics.
     {
       "itemId": "string (selling_unit_id)",
       "name": "string",
-      "score": "number (0-1, relevance)",
+      "score": "number (0-100, relevance)",
       "reason": "string (behavioral evidence)",
       "reasonTag": "repeat | overdue | co-purchase",
       "suggestedQuantity": "number",
@@ -72,7 +72,7 @@ Analysis shows: Whole milk bought 12/15 weeks, Bananas 14/15, Eggs 10/15. Cart a
     {
       "itemId": "s1234",
       "name": "Whole Milk 1L",
-      "score": 0.92,
+      "score": 92,
       "reason": "Bought 12 of last 15 weeks, last purchased 6 days ago",
       "reasonTag": "repeat",
       "suggestedQuantity": 2,
@@ -82,7 +82,7 @@ Analysis shows: Whole milk bought 12/15 weeks, Bananas 14/15, Eggs 10/15. Cart a
     {
       "itemId": "s5678",
       "name": "Free Range Eggs 10-pack",
-      "score": 0.78,
+      "score": 78,
       "reason": "Bought 10 of last 15 weeks, typically buys with milk",
       "reasonTag": "co-purchase",
       "suggestedQuantity": 1,
@@ -105,7 +105,7 @@ Analysis shows: Only 2 orders in history. Favorites include Avocados and Sourdou
     {
       "itemId": "s9012",
       "name": "Avocados 2-pack",
-      "score": 0.6,
+      "score": 60,
       "reason": "Listed as a favorite, purchased in both previous orders",
       "reasonTag": "repeat",
       "suggestedQuantity": 1,

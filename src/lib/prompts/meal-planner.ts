@@ -54,7 +54,7 @@ Your role is to plan meals for the week based on the user's requests, map them t
     {
       "itemId": "string",
       "name": "string",
-      "score": "number (0-1)",
+      "score": "number (0-100)",
       "reason": "string",
       "reasonTag": "recipe",
       "suggestedQuantity": "number",
@@ -128,7 +128,7 @@ User wants: "BBQ for Saturday, 4 guests coming". Cooking for 2 normally. Budget 
     {
       "itemId": "s5010",
       "name": "BBQ Sauce 500ml",
-      "score": 0.7,
+      "score": 70,
       "reason": "Needed for BBQ marinading, not in cart or recipe list",
       "reasonTag": "recipe",
       "suggestedQuantity": 1,
