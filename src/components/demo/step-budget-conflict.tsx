@@ -80,7 +80,7 @@ export function StepBudgetConflict({ isActive }: StepBudgetConflictProps) {
       />
 
       <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        Step 6
+        Step 7
       </p>
       <h2 className="mb-12 text-center text-5xl font-bold text-[var(--text-primary)]">
         Budget Conflict
@@ -159,7 +159,7 @@ export function StepBudgetConflict({ isActive }: StepBudgetConflictProps) {
             animate={phase >= 5 ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Max 3 swaps, staples protected, recipes untouched
+            Max 3 swaps, staples protected, recipe items untouched
           </motion.p>
         </div>
 

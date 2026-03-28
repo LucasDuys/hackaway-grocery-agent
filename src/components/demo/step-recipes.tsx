@@ -48,7 +48,7 @@ export function StepRecipes({ isActive }: StepRecipesProps) {
       transition={{ duration: 0.4 }}
     >
       <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        Step 4
+        Step 5
       </p>
       <h2 className="mb-4 text-center text-5xl font-bold text-[var(--text-primary)]">
         Available Picnic Recipes

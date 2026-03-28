@@ -14,7 +14,7 @@ const demonstrated = [
   },
   {
     title: "Accumulated Memory (preference learning)",
-    detail: "Order history analysis builds a preference model -- staples, co-purchases, spending patterns -- that improves over time.",
+    detail: "100 orders analyzed, 82 unique products tracked. Order history builds a preference model -- staples, co-purchases, spending patterns -- that improves over time.",
   },
   {
     title: "Periodic Autonomy (proactive reorder notification)",
@@ -25,8 +25,12 @@ const demonstrated = [
     detail: "Five specialized agents pass structured data through a DAG -- meal plans, budgets, substitutions -- without losing context.",
   },
   {
-    title: "Dietary awareness",
-    detail: "Supports vegetarian, vegan, gluten-free, and 4 more restrictions. Handles guest-specific dietary needs.",
+    title: "Free-form meal planning",
+    detail: "Handles named dishes, nutritional goals, and category requests. Natural language input parsed into structured meal plans.",
+  },
+  {
+    title: "Scale",
+    detail: "100 orders analyzed, 499 products indexed, <50ms analysis. Customer profile built from 2 years of purchase history.",
   },
 ];
 

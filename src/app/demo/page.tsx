@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { StepIndicator } from "@/components/demo/step-indicator";
+import { StepCustomerProfile } from "@/components/demo/step-customer-profile";
 import { StepInputParse } from "@/components/demo/step-input-parse";
 import { StepDataFetch } from "@/components/demo/step-data-fetch";
 import { StepAnalysis } from "@/components/demo/step-analysis";
@@ -13,7 +14,7 @@ import { StepCartAssembly } from "@/components/demo/step-cart-assembly";
 import { StepCheckout } from "@/components/demo/step-checkout";
 import { StepSummary } from "@/components/demo/step-summary";
 
-const TOTAL_STEPS = 10; // 0 = title, 1-8 = content steps, 9 = summary
+const TOTAL_STEPS = 11; // 0 = title, 1 = customer profile, 2-9 = content steps, 10 = summary
 
 function TitleSlide({ isActive }: { isActive: boolean }) {
   return (
@@ -79,6 +80,7 @@ function TitleSlide({ isActive }: { isActive: boolean }) {
 
 const STEP_COMPONENTS = [
   TitleSlide,
+  StepCustomerProfile,
   StepInputParse,
   StepDataFetch,
   StepAnalysis,

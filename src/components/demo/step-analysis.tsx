@@ -9,8 +9,8 @@ interface StepAnalysisProps {
 
 const insights = [
   {
-    title: "45 staples identified",
-    detail: "Items bought in 70%+ of orders",
+    title: "82 unique products tracked",
+    detail: "Items categorized by purchase frequency across 100 orders",
     barSegments: [
       { width: 45, color: "var(--budget-green)", label: "staple" },
       { width: 30, color: "var(--agent-order-analyst)", label: "regular" },
@@ -19,13 +19,13 @@ const insights = [
     ],
   },
   {
-    title: "Average weekly spend: EUR 78",
-    detail: "Based on last 100 orders",
-    sparkline: [62, 71, 85, 78, 69, 82, 90, 74, 78, 80],
+    title: "Average weekly spend: EUR 201",
+    detail: "100 orders analyzed in <50ms",
+    sparkline: [180, 195, 210, 201, 190, 205, 220, 195, 201, 207],
   },
   {
-    title: "Household: couple",
-    detail: "Estimated from purchase volume and categories",
+    title: "Dietary filtering",
+    detail: "Supports vegetarian, vegan, gluten-free, and 4 more restrictions",
   },
   {
     title: "Top co-purchase: melk + brood",
@@ -63,7 +63,7 @@ export function StepAnalysis({ isActive }: StepAnalysisProps) {
       transition={{ duration: 0.4 }}
     >
       <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        Step 3
+        Step 4
       </p>
       <h2 className="mb-4 text-center text-5xl font-bold text-[var(--text-primary)]">
         Pattern Analysis
