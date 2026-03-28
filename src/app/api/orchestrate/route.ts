@@ -132,10 +132,11 @@ function centsToEur(cents: number): string {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
-  // The client hook sends { userInput: string, dietaryRestrictions?: string[] }
+  // The client hook sends { userInput: string, dietaryRestrictions?: string[], persona?: string }
   const body = await req.json();
   const input: string = body.userInput ?? body.input ?? "";
   const dietaryRestrictions: string[] | undefined = body.dietaryRestrictions;
+  const persona: "family" | "student" = body.persona === "student" ? "student" : "family";
 
   if (!input.trim()) {
     return new Response(JSON.stringify({ error: "No input provided" }), {
@@ -279,7 +280,8 @@ export async function POST(req: Request) {
 
         const t0Prefetch = Date.now();
         const data = await prefetchAll(
-          searchQueries.length > 0 ? searchQueries : undefined
+          searchQueries.length > 0 ? searchQueries : undefined,
+          persona
         );
         timings["prefetch"] = Date.now() - t0Prefetch;
 

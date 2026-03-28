@@ -13,14 +13,18 @@ import { PipelineView } from "@/components/pipeline-view";
 import { MealPlanSummary } from "@/components/meal-plan-summary";
 import { ProactiveNotification } from "@/components/proactive-notification";
 import { useOrchestration } from "@/hooks/use-orchestration";
+import { PersonaSelector, PersonaIndicator } from "@/components/persona-selector";
+import type { Persona } from "@/components/persona-selector";
 import type { DietaryRestriction } from "@/types";
 import mockOrders from "@/data/mock-orders.json";
+import mockOrdersStudent from "@/data/mock-orders-student.json";
 
 export default function Home() {
   const [isTransparencyMode, setIsTransparencyMode] = useState(true);
   const [rightTab, setRightTab] = useState<"pipeline" | "feed">("pipeline");
   const [notificationDismissed, setNotificationDismissed] = useState(false);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<DietaryRestriction[]>([]);
+  const [persona, setPersona] = useState<Persona>("family");
   const [dataReady, setDataReady] = useState(false);
 
   useEffect(() => {
@@ -33,11 +37,12 @@ export default function Home() {
   }, []);
 
   const daysSinceLastOrder = useMemo(() => {
-    const deliveryTimes = mockOrders.map((o) => o.delivery_time);
+    const orders = persona === "student" ? mockOrdersStudent : mockOrders;
+    const deliveryTimes = orders.map((o) => o.delivery_time);
     const mostRecent = Math.max(...deliveryTimes);
     const diffMs = Date.now() - mostRecent;
     return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  }, []);
+  }, [persona]);
 
   const {
     agentStates,
@@ -102,7 +107,7 @@ export default function Home() {
             onDismiss={() => setNotificationDismissed(true)}
             onAction={() => {
               setNotificationDismissed(true);
-              orchestrate("Sort this week's shop", dietaryRestrictions);
+              orchestrate("Sort this week's shop", dietaryRestrictions, persona);
             }}
           />
         )}
@@ -128,7 +133,14 @@ export default function Home() {
             )}
             <div className="flex-1 overflow-hidden">
               {cartSummary ? (
-                <CartView summary={cartSummary} isRunning={isRunning} />
+                <div className="flex h-full flex-col">
+                  <div className="flex shrink-0 items-center px-4 pt-2">
+                    <PersonaIndicator persona={persona} />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <CartView summary={cartSummary} isRunning={isRunning} />
+                  </div>
+                </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
                   <div className="rounded-full bg-[var(--picnic-red-light)] p-5">
@@ -155,17 +167,26 @@ export default function Home() {
                     Describe your plans and we will put together a smart grocery list for you.
                   </p>
                   {!isRunning && (
-                    <div className="mt-2 flex flex-col gap-2">
-                      {EXAMPLE_PROMPTS.map((prompt) => (
-                        <button
-                          key={prompt}
-                          onClick={() => orchestrate(prompt, dietaryRestrictions)}
-                          className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:border-[var(--picnic-red)] hover:bg-[var(--picnic-red-light)] hover:text-[var(--picnic-red)]"
-                        >
-                          {prompt}
-                        </button>
-                      ))}
-                    </div>
+                    <>
+                      <div className="mt-2 w-full max-w-sm">
+                        <PersonaSelector
+                          selected={persona}
+                          onChange={setPersona}
+                          disabled={isRunning}
+                        />
+                      </div>
+                      <div className="mt-2 flex flex-col gap-2">
+                        {EXAMPLE_PROMPTS.map((prompt) => (
+                          <button
+                            key={prompt}
+                            onClick={() => orchestrate(prompt, dietaryRestrictions, persona)}
+                            className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:border-[var(--picnic-red)] hover:bg-[var(--picnic-red-light)] hover:text-[var(--picnic-red)]"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -192,7 +213,7 @@ export default function Home() {
 
             {/* Input bar */}
             <InputBar
-              onSubmit={(input) => orchestrate(input, dietaryRestrictions)}
+              onSubmit={(input) => orchestrate(input, dietaryRestrictions, persona)}
               isRunning={isRunning}
               onReset={reset}
               showReset={!!(cartSummary || activityLog.length > 0)}

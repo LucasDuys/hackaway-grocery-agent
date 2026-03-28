@@ -24,7 +24,12 @@ import type {
 } from "./types";
 import { PicnicClient } from "./client";
 
-/** In-memory session cache. Cleared when the server process restarts. */
+/** Persona type for mock data selection. */
+export type Persona = "family" | "student";
+
+/** In-memory session cache, keyed by persona. Cleared when the server process restarts. */
+const cacheMap: Record<string, { data: PicnicData; timestamp: number }> = {};
+// Legacy aliases for backwards compatibility
 let cache: PicnicData | null = null;
 let cacheTimestamp = 0;
 
@@ -41,22 +46,27 @@ const PREFETCH_TIMEOUT_MS = 5_000;
  * cached data unless `force` is set to true.
  *
  * @param searchQueries - Optional product search terms (e.g. recipe ingredients)
+ * @param persona - Which persona's mock data to use ("family" | "student"), defaults to "family"
  * @param options.force - Bypass the cache and re-fetch everything
  */
 export async function prefetchAll(
   searchQueries?: string[],
+  persona?: Persona,
   options?: { force?: boolean }
 ): Promise<PicnicData> {
   const force = options?.force ?? false;
+  const effectivePersona = persona ?? "family";
+  const cacheKey = effectivePersona;
 
   // Return cached data if still valid and no new search queries
+  const cached = cacheMap[cacheKey];
   if (
     !force &&
-    cache &&
-    Date.now() - cacheTimestamp < CACHE_TTL_MS &&
+    cached &&
+    Date.now() - cached.timestamp < CACHE_TTL_MS &&
     (!searchQueries || searchQueries.length === 0)
   ) {
-    return cache;
+    return cached.data;
   }
 
   const client = new PicnicClient();
@@ -64,13 +74,12 @@ export async function prefetchAll(
 
   // Race all fetches against a timeout
   const result = await Promise.race([
-    fetchAllData(client, searchQueries),
+    fetchAllData(client, searchQueries, effectivePersona),
     timeout(PREFETCH_TIMEOUT_MS),
   ]);
 
-  // Cache the result
-  cache = result;
-  cacheTimestamp = Date.now();
+  // Cache the result per persona
+  cacheMap[cacheKey] = { data: result, timestamp: Date.now() };
 
   return result;
 }
@@ -78,9 +87,15 @@ export async function prefetchAll(
 /**
  * Invalidate the in-memory cache so the next prefetchAll() call re-fetches.
  */
-export function invalidateCache(): void {
-  cache = null;
-  cacheTimestamp = 0;
+export function invalidateCache(persona?: Persona): void {
+  if (persona) {
+    delete cacheMap[persona];
+  } else {
+    // Clear all persona caches
+    for (const key of Object.keys(cacheMap)) {
+      delete cacheMap[key];
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -89,7 +104,8 @@ export function invalidateCache(): void {
 
 async function fetchAllData(
   client: PicnicClient,
-  searchQueries?: string[]
+  searchQueries?: string[],
+  persona?: Persona
 ): Promise<PicnicData> {
   // Core fetches -- always run in parallel
   const [ordersRaw, favoritesRaw, cartRaw, slotsRaw] = await Promise.all([
@@ -150,13 +166,18 @@ async function fetchAllData(
   // Fall back to mock data when the API returns no order history
   if (orders.length === 0) {
     try {
-      const mockData = await import("@/data/mock-orders.json");
-      orders = mockData.default as PicnicOrder[];
+      if (persona === "student") {
+        const mockData = await import("@/data/mock-orders-student.json");
+        orders = mockData.default as PicnicOrder[];
+      } else {
+        const mockData = await import("@/data/mock-orders.json");
+        orders = mockData.default as PicnicOrder[];
+      }
       console.log(
-        `[prefetch] No API orders found. Loaded ${orders.length} mock orders.`
+        `[prefetch] No API orders found. Loaded ${orders.length} mock orders (${persona ?? "family"} persona).`
       );
     } catch {
-      console.warn("[prefetch] No mock order data available at @/data/mock-orders.json");
+      console.warn("[prefetch] No mock order data available");
     }
   }
 

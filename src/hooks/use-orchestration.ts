@@ -204,7 +204,7 @@ export function useOrchestration() {
     timersRef.current = timers;
   }, []);
 
-  const runSSE = useCallback(async (input: string, dietaryRestrictions?: DietaryRestriction[]) => {
+  const runSSE = useCallback(async (input: string, dietaryRestrictions?: DietaryRestriction[], persona?: "family" | "student") => {
     setIsRunning(true);
     setError(null);
     setActivityLog([]);
@@ -224,7 +224,7 @@ export function useOrchestration() {
       const res = await fetch("/api/orchestrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userInput: input, dietaryRestrictions }),
+        body: JSON.stringify({ userInput: input, dietaryRestrictions, persona }),
         signal: controller.signal,
       });
 
@@ -312,11 +312,11 @@ export function useOrchestration() {
   }, []);
 
   const orchestrate = useCallback(
-    (input: string, dietaryRestrictions?: DietaryRestriction[]) => {
+    (input: string, dietaryRestrictions?: DietaryRestriction[], persona?: "family" | "student") => {
       if (demoMode) {
         runDemo(input);
       } else {
-        runSSE(input, dietaryRestrictions);
+        runSSE(input, dietaryRestrictions, persona);
       }
     },
     [demoMode, runDemo, runSSE]
