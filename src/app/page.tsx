@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence } from "motion/react";
 import { Header } from "@/components/header";
-import { DietaryFilter } from "@/components/dietary-filter";
 import { SplitPanelLayout } from "@/components/split-panel-layout";
 import { CartView } from "@/components/cart-view";
 import { AgentStatusPanel } from "@/components/agent-status-panel";
@@ -181,12 +180,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* Dietary preferences */}
-            <DietaryFilter
-              selected={dietaryRestrictions}
-              onChange={setDietaryRestrictions}
-            />
-
             {/* Prefetch status */}
             {dataReady && (
               <div className="flex items-center justify-center gap-1.5 py-1 animate-in fade-in duration-500">
@@ -203,6 +196,8 @@ export default function Home() {
               isRunning={isRunning}
               onReset={reset}
               showReset={!!(cartSummary || activityLog.length > 0)}
+              dietaryRestrictions={dietaryRestrictions}
+              onDietaryChange={setDietaryRestrictions}
             />
 
             {/* Spacer to prevent content from hiding behind fixed input bar on mobile */}

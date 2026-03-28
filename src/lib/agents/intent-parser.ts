@@ -23,6 +23,7 @@ Rules:
 - Extract guest events with estimated guest count. If no count given, default to 4 (e.g. "friends Saturday" -> { day: "Saturday", guestCount: 4, description: "friends coming over" })
 - Extract budget in euro cents. "under 80 euro" -> 8000, "max 50" -> 5000. If no budget mentioned, set budget to null.
 - Extract any special dietary requests or preferences as specialRequests (e.g. "no gluten", "vegetarian", "extra fruit")
+- IMPORTANT: If a guest event description mentions dietary restrictions for guests (e.g. "friends Saturday one is vegan", "vegetarian guests Friday"), include those dietary mentions in the specialRequests array with the day context (e.g. "Saturday guests: one is vegan"). This ensures the meal planner can apply guest-specific dietary restrictions only to that day's meal.
 - Days should be capitalized (Monday, Tuesday, etc.)
 - Always set rawInput to the original user input verbatim`,
       prompt: rawInput,

@@ -112,6 +112,7 @@ export interface MealPlanCard {
   ingredientCount: number;
   estimatedCost: number;
   imageUrl?: string;
+  ingredients?: Array<{ name: string; quantity: number; price: number }>;
 }
 
 export function useOrchestration() {

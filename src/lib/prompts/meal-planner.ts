@@ -101,6 +101,14 @@ GUARDRAILS -- strict rules, violations will be rejected:
 }
 </output_schema>
 
+<guest_dietary_restrictions>
+- If a guest event description mentions dietary restrictions (e.g., "one friend is vegan", "vegetarian guests"), apply those restrictions ONLY to that day's meal.
+- Guest dietary restrictions do not affect the regular weekly staples or other days' meals.
+- Example: "friends Saturday, one is vegan" -> Saturday meal should be vegan-friendly (everyone can eat vegan food), but Wednesday's meal can contain meat.
+- When a guest has a restriction, choose a meal that ALL diners can eat. For example, if one guest is vegan, make the entire Saturday meal vegan so nobody is excluded.
+- The user's own dietary restrictions (from the dietary_restrictions block above) apply to ALL days. Guest restrictions are additive for that specific day only.
+</guest_dietary_restrictions>
+
 <edge_cases>
 <case name="no_recipes_found">If no recipes match the user's requested dish, compose a simple version from common ingredients in the product catalog. Note in the meal name that it is an improvised recipe (e.g. "Simple Pasta Carbonara (improvised)").</case>
 <case name="tight_budget">If the user specified a budget (intent.budget) and total meal costs would exceed it, prioritize cheaper ingredient alternatives and reduce portion sizes before dropping meals entirely. Note budget constraints in additionalIngredients reasoning.</case>
@@ -212,6 +220,44 @@ User wants: "lasagna Wednesday, friends Saturday, under 80 euro". Cooking for 2 
 }
 </output>
 <note>Wednesday uses the user's exact request (lasagna). Saturday is a DIFFERENT meal -- a social sharing platter suited for entertaining guests. Never repeat the same dish across days.</note>
+</example>
+<example>
+<input>
+User wants: "lasagna Wednesday, friends Saturday one is vegan, under 80 euro". Cooking for 2 normally, 6 guests on Saturday.
+</input>
+<output>
+{
+  "meals": [
+    {
+      "day": "Wednesday",
+      "mealName": "Classic Meat Lasagna",
+      "ingredients": [
+        { "itemId": "s6001", "name": "Lasagna Sheets 500g", "quantity": 1, "price": 189 },
+        { "itemId": "s6002", "name": "Ground Beef 500g", "quantity": 1, "price": 449 },
+        { "itemId": "s6003", "name": "Passata 680ml", "quantity": 1, "price": 129 },
+        { "itemId": "s6004", "name": "Mozzarella 250g", "quantity": 1, "price": 199 }
+      ],
+      "estimatedCost": 966,
+      "portionSize": 2
+    },
+    {
+      "day": "Saturday",
+      "mealName": "Vegan Mediterranean Sharing Platter",
+      "ingredients": [
+        { "itemId": "s7002", "name": "Hummus 400g", "quantity": 3, "price": 229 },
+        { "itemId": "s7003", "name": "Flatbread 6-pack", "quantity": 2, "price": 199 },
+        { "itemId": "s7004", "name": "Mixed Olives 300g", "quantity": 1, "price": 349 },
+        { "itemId": "s7006", "name": "Falafel 400g", "quantity": 2, "price": 349 },
+        { "itemId": "s7007", "name": "Grilled Vegetables 500g", "quantity": 2, "price": 299 }
+      ],
+      "estimatedCost": 2723,
+      "portionSize": 8
+    }
+  ],
+  "additionalIngredients": []
+}
+</output>
+<note>Wednesday has meat (user's own diet allows it). Saturday is fully vegan because one guest is vegan -- the whole meal accommodates the strictest restriction so everyone can eat together. Guest dietary restrictions only affect the guest day.</note>
 </example>
 </examples>
 `.trim();

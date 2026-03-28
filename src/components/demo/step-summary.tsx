@@ -24,6 +24,10 @@ const demonstrated = [
     title: "Social Context (agent data handoffs)",
     detail: "Five specialized agents pass structured data through a DAG -- meal plans, budgets, substitutions -- without losing context.",
   },
+  {
+    title: "Dietary awareness",
+    detail: "Supports vegetarian, vegan, gluten-free, and 4 more restrictions. Handles guest-specific dietary needs.",
+  },
 ];
 
 const cutItems = [
@@ -36,8 +40,8 @@ const cutItems = [
     reason: "Logistics, not intelligence. Interesting for ops, but does not demonstrate agent coordination.",
   },
   {
-    feature: "Dietary conflict detection",
-    reason: "Architecture supports it (SOUL.md has the data), but we scoped down to ship a working demo.",
+    feature: "Real-time price tracking",
+    reason: "Useful for budget optimization, but adds API complexity without demonstrating agent coordination.",
   },
 ];
 

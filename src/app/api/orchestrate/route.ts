@@ -445,6 +445,11 @@ export async function POST(req: Request) {
               ingredientCount: meal.ingredients.length,
               estimatedCost: meal.estimatedCost,
               imageUrl,
+              ingredients: meal.ingredients.map((ing) => ({
+                name: ing.name,
+                quantity: ing.quantity,
+                price: ing.price,
+              })),
             };
           }),
         });
