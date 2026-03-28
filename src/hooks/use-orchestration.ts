@@ -8,6 +8,7 @@ import type {
   AgentHandoff,
   CartSummary,
   ActionType,
+  DietaryRestriction,
 } from "@/types";
 
 const DEFAULT_DEMO_MODE = false;
@@ -202,7 +203,7 @@ export function useOrchestration() {
     timersRef.current = timers;
   }, []);
 
-  const runSSE = useCallback(async (input: string) => {
+  const runSSE = useCallback(async (input: string, dietaryRestrictions?: DietaryRestriction[]) => {
     setIsRunning(true);
     setError(null);
     setActivityLog([]);
@@ -222,7 +223,7 @@ export function useOrchestration() {
       const res = await fetch("/api/orchestrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userInput: input }),
+        body: JSON.stringify({ userInput: input, dietaryRestrictions }),
         signal: controller.signal,
       });
 
@@ -310,11 +311,11 @@ export function useOrchestration() {
   }, []);
 
   const orchestrate = useCallback(
-    (input: string) => {
+    (input: string, dietaryRestrictions?: DietaryRestriction[]) => {
       if (demoMode) {
         runDemo(input);
       } else {
-        runSSE(input);
+        runSSE(input, dietaryRestrictions);
       }
     },
     [demoMode, runDemo, runSSE]

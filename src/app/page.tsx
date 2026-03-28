@@ -103,7 +103,7 @@ export default function Home() {
             onDismiss={() => setNotificationDismissed(true)}
             onAction={() => {
               setNotificationDismissed(true);
-              orchestrate("Sort this week's shop");
+              orchestrate("Sort this week's shop", dietaryRestrictions);
             }}
           />
         )}
@@ -160,7 +160,7 @@ export default function Home() {
                       {EXAMPLE_PROMPTS.map((prompt) => (
                         <button
                           key={prompt}
-                          onClick={() => orchestrate(prompt)}
+                          onClick={() => orchestrate(prompt, dietaryRestrictions)}
                           className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:border-[var(--picnic-red)] hover:bg-[var(--picnic-red-light)] hover:text-[var(--picnic-red)]"
                         >
                           {prompt}
@@ -199,7 +199,7 @@ export default function Home() {
 
             {/* Input bar */}
             <InputBar
-              onSubmit={orchestrate}
+              onSubmit={(input) => orchestrate(input, dietaryRestrictions)}
               isRunning={isRunning}
               onReset={reset}
               showReset={!!(cartSummary || activityLog.length > 0)}

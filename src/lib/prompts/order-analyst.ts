@@ -1,11 +1,12 @@
-import type { AnalysisResult, PicnicData } from "@/types";
+import type { AnalysisResult, PicnicData, DietaryRestriction } from "@/types";
 import { getSoulBlock } from "./soul";
 
 export function buildOrderAnalystPrompt(
   analysis: AnalysisResult,
   data: PicnicData,
   budgetCents?: number | null,
-  preferencesContext?: string
+  preferencesContext?: string,
+  dietaryRestrictions?: DietaryRestriction[]
 ): string {
   const recentOrders = data.orders.slice(0, 5).map((o) => ({
     date: new Date(o.delivery_time).toISOString().slice(0, 10),
@@ -25,7 +26,7 @@ You reason about behavioral evidence -- not raw statistics.
 <current_cart>${JSON.stringify(data.cart.map((c) => ({ id: c.selling_unit_id, name: c.name, quantity: c.quantity })), null, 2)}</current_cart>
 </context>
 
-${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
+${dietaryRestrictions && dietaryRestrictions.length > 0 ? `DIETARY RESTRICTIONS: The user follows ${dietaryRestrictions.join(", ")}. Do not recommend items that conflict with these restrictions.\n\n` : ""}${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
 1. Review the pre-computed analysis (classifications, recommendations, co-purchase rules, budget, household estimate).
 2. Select the most relevant items to recommend for this week's order.
 3. For each recommended item, write a human-readable "reason" field using behavioral evidence language:

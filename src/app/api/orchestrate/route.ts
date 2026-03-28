@@ -132,9 +132,10 @@ function centsToEur(cents: number): string {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
-  // The client hook sends { userInput: string }
+  // The client hook sends { userInput: string, dietaryRestrictions?: string[] }
   const body = await req.json();
   const input: string = body.userInput ?? body.input ?? "";
+  const dietaryRestrictions: string[] | undefined = body.dietaryRestrictions;
 
   if (!input.trim()) {
     return new Response(JSON.stringify({ error: "No input provided" }), {
@@ -179,6 +180,18 @@ export async function POST(req: Request) {
         const t0Intent = Date.now();
         const intent = await parseIntent(input);
         timings["orchestrator-parse"] = Date.now() - t0Intent;
+
+        // Merge dietary restrictions from request body into parsed intent
+        if (dietaryRestrictions && dietaryRestrictions.length > 0) {
+          intent.dietaryRestrictions = dietaryRestrictions as import("@/types").DietaryRestriction[];
+        }
+
+        // Send dietary event if restrictions are active
+        if (intent.dietaryRestrictions?.length) {
+          sendAgentEvent(send, "orchestrator", "APPROVE",
+            `Dietary restrictions active: ${intent.dietaryRestrictions.join(", ")}`
+          );
+        }
 
         // ---------------------------------------------------------------
         // Load user preferences from memory
@@ -270,7 +283,7 @@ export async function POST(req: Request) {
         // parallel execution. We run order analyst first, then meal planner +
         // schedule in parallel for correctness.
         const t0OrderAnalyst = Date.now();
-        const orderResult = await runOrderAnalyst(analysis, data, intent.budget, preferencesContext);
+        const orderResult = await runOrderAnalyst(analysis, data, intent.budget, preferencesContext, intent.dietaryRestrictions);
         timings["order-analyst"] = Date.now() - t0OrderAnalyst;
 
         // Send order analyst events

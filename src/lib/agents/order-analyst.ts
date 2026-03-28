@@ -2,7 +2,7 @@ import { generateObject } from "ai";
 import { getModel } from "@/lib/ai/models";
 import { buildOrderAnalystPrompt } from "@/lib/prompts/order-analyst";
 import { orderAnalystSchema } from "./schemas";
-import type { AnalysisResult, PicnicData, OrderAnalystOutput } from "@/types";
+import type { AnalysisResult, PicnicData, OrderAnalystOutput, DietaryRestriction } from "@/types";
 
 /**
  * Run the Order Analyst agent.
@@ -14,13 +14,14 @@ export async function runOrderAnalyst(
   analysis: AnalysisResult,
   data: PicnicData,
   budgetCents?: number | null,
-  preferencesContext?: string
+  preferencesContext?: string,
+  dietaryRestrictions?: DietaryRestriction[]
 ): Promise<OrderAnalystOutput> {
   try {
     const result = await generateObject({
       model: getModel("order-analyst"),
       schema: orderAnalystSchema,
-      system: buildOrderAnalystPrompt(analysis, data, budgetCents, preferencesContext),
+      system: buildOrderAnalystPrompt(analysis, data, budgetCents, preferencesContext, dietaryRestrictions),
       prompt:
         "Analyze the order history and recommend items for this week's shop.",
     });

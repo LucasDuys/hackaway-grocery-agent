@@ -1,6 +1,27 @@
 import type { ParsedIntent, PicnicProduct, PicnicRecipe, PicnicCartItem } from "@/types";
 import { getSoulBlock } from "./soul";
 
+function buildDietaryBlock(intent: ParsedIntent): string {
+  if (!intent.dietaryRestrictions || intent.dietaryRestrictions.length === 0) {
+    return "";
+  }
+
+  return `<dietary_restrictions>
+The user has the following dietary restrictions: ${intent.dietaryRestrictions.join(", ")}
+- ONLY suggest meals and ingredients compatible with these restrictions
+- Filter recipes by dietary tags where available
+- For vegetarian: no meat, fish, or poultry in any ingredient
+- For vegan: no animal products at all (no dairy, eggs, honey)
+- For gluten-free: no wheat, barley, rye, or products containing gluten
+- For lactose-free: no dairy milk, cheese, yogurt, cream
+- For halal: no pork, no alcohol-based ingredients
+- For nut-free: no nuts or nut-derived products
+- For low-sugar: prefer products with reduced sugar content
+</dietary_restrictions>
+
+`;
+}
+
 export function buildMealPlannerPrompt(
   intent: ParsedIntent,
   recipes: PicnicRecipe[],
@@ -8,6 +29,8 @@ export function buildMealPlannerPrompt(
   baseCart: PicnicCartItem[],
   preferencesContext?: string
 ): string {
+  const dietaryBlock = buildDietaryBlock(intent);
+
   return `${getSoulBlock()}<identity>
 You are the Meal Planner, a specialized agent in a grocery orchestration system.
 Your role is to plan meals for the week based on the user's requests, map them to concrete ingredients with prices, and avoid duplicating items already in the base cart.
@@ -20,7 +43,7 @@ Your role is to plan meals for the week based on the user's requests, map them t
 <base_cart>${JSON.stringify(baseCart.map((c) => ({ id: c.selling_unit_id, name: c.name, quantity: c.quantity })), null, 2)}</base_cart>
 </context>
 
-${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
+${dietaryBlock}${preferencesContext ? preferencesContext + "\n\n" : ""}<instructions>
 CRITICAL RULE: When an available_recipe matches the user's requested meal, you MUST use that recipe's exact ingredients with their real selling_unit_ids. Do NOT invent or fabricate product IDs. The recipe ingredients already have correct selling_unit_id values that map to real Picnic products. Only fall back to the product_catalog for ingredients when NO matching recipe exists.
 
 1. For each meal the user requested (see user_intent.meals), FIRST check available_recipes for a matching recipe. If a recipe matches (even partially by name), use its ingredients directly -- they have verified selling_unit_ids.
