@@ -9,7 +9,7 @@ import type {
   ActionType,
 } from "@/types";
 
-const DEMO_MODE = true;
+const DEFAULT_DEMO_MODE = false;
 
 type AgentStates = Record<AgentName, { status: AgentStatus; message: string }>;
 
@@ -105,6 +105,7 @@ const demoCartSummary: CartSummary = {
 };
 
 export function useOrchestration() {
+  const [demoMode, setDemoMode] = useState(DEFAULT_DEMO_MODE);
   const [agentStates, setAgentStates] = useState<AgentStates>({ ...initialAgentStates });
   const [activityLog, setActivityLog] = useState<AgentEvent[]>([]);
   const [cartSummary, setCartSummary] = useState<CartSummary | null>(null);
@@ -247,6 +248,10 @@ export function useOrchestration() {
               setCartSummary(parsed.data);
             } else if (parsed.type === "streamed-text") {
               setStreamedText((prev) => prev + (parsed.data.text ?? ""));
+            } else if (parsed.type === "error") {
+              setError(parsed.data?.message ?? "Pipeline error");
+            } else if (parsed.type === "done") {
+              // Stream complete -- handled by the reader loop ending
             }
           } catch {
             // Skip malformed JSON lines
@@ -264,13 +269,13 @@ export function useOrchestration() {
 
   const orchestrate = useCallback(
     (input: string) => {
-      if (DEMO_MODE) {
+      if (demoMode) {
         runDemo(input);
       } else {
         runSSE(input);
       }
     },
-    [runDemo, runSSE]
+    [demoMode, runDemo, runSSE]
   );
 
   return {
@@ -280,6 +285,8 @@ export function useOrchestration() {
     streamedText,
     isRunning,
     error,
+    demoMode,
+    setDemoMode,
     orchestrate,
     reset,
   };

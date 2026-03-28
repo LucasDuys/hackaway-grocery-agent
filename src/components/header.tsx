@@ -4,12 +4,16 @@ interface HeaderProps {
   isTransparencyMode: boolean;
   onToggleMode: () => void;
   pipelineStatus?: string;
+  demoMode?: boolean;
+  onToggleDemo?: () => void;
 }
 
 export function Header({
   isTransparencyMode,
   onToggleMode,
   pipelineStatus,
+  demoMode,
+  onToggleDemo,
 }: HeaderProps) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-5">
@@ -20,13 +24,33 @@ export function Header({
         </span>
       </div>
 
-      {/* Center: Pipeline status */}
-      <div className="flex items-center gap-2">
+      {/* Center: Pipeline status + Demo toggle */}
+      <div className="flex items-center gap-3">
         {pipelineStatus && (
           <span className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
-            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${
+                pipelineStatus === "Agents working..."
+                  ? "animate-pulse bg-amber-500"
+                  : pipelineStatus === "Pipeline complete"
+                    ? "bg-emerald-500"
+                    : "bg-gray-400"
+              }`}
+            />
             {pipelineStatus}
           </span>
+        )}
+        {onToggleDemo && (
+          <button
+            onClick={onToggleDemo}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              demoMode
+                ? "border-amber-400 bg-amber-50 text-amber-700"
+                : "border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-secondary)]"
+            }`}
+          >
+            {demoMode ? "Demo" : "Live"}
+          </button>
         )}
       </div>
 
