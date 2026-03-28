@@ -694,9 +694,8 @@ export async function POST(req: Request) {
           (sum, item) => sum + item.price * item.quantity,
           0
         );
-        const budget = isAutoMode
-          ? analysis.budget.avgWeeklySpend
-          : (intent.budget ?? analysis.budget.avgWeeklySpend);
+        // ALWAYS use the user's stated budget if provided, regardless of mode
+        const budget = intent.budget ?? analysis.budget.avgWeeklySpend;
         let savings = 0;
         let substitutionCount = 0;
         let budgetOptimizerResult: BudgetOptimizerOutput | null = null;
