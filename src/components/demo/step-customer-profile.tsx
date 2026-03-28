@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useMemo } from "react";
-import mockOrders from "@/data/mock-orders.json";
+import familyOrders from "@/data/mock-orders.json";
+import studentOrders from "@/data/mock-orders-student.json";
 
 interface StepCustomerProfileProps {
   isActive: boolean;
@@ -14,8 +15,8 @@ interface OrderSummary {
   total: string;
 }
 
-function computeStats() {
-  const sorted = [...mockOrders].sort(
+function computeStats(orders: typeof familyOrders) {
+  const sorted = [...orders].sort(
     (a, b) => b.delivery_time - a.delivery_time
   );
 
@@ -31,7 +32,7 @@ function computeStats() {
   });
 
   // Average basket
-  const totals = mockOrders.map(
+  const totals = orders.map(
     (o) => o.items.reduce((s, i) => s + i.price * i.quantity, 0) / 100
   );
   const avgBasket = (totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(
@@ -39,7 +40,7 @@ function computeStats() {
   );
 
   // Average items per order
-  const itemCounts = mockOrders.map((o) =>
+  const itemCounts = orders.map((o) =>
     o.items.reduce((s, i) => s + i.quantity, 0)
   );
   const avgItems = Math.round(
@@ -48,7 +49,7 @@ function computeStats() {
 
   // Unique products
   const uniqueProducts = new Set<string>();
-  mockOrders.forEach((o) =>
+  orders.forEach((o) =>
     o.items.forEach((i) => uniqueProducts.add(i.selling_unit_id))
   );
 
@@ -63,7 +64,7 @@ function computeStats() {
     "Saturday",
   ];
   const dayCounts: Record<string, number> = {};
-  mockOrders.forEach((o) => {
+  orders.forEach((o) => {
     const d = new Date(o.delivery_time).getDay();
     dayCounts[days[d]] = (dayCounts[days[d]] || 0) + 1;
   });
@@ -73,7 +74,7 @@ function computeStats() {
 
   // Top 5 products by frequency
   const prodFreq: Record<string, number> = {};
-  mockOrders.forEach((o) =>
+  orders.forEach((o) =>
     o.items.forEach((i) => {
       prodFreq[i.name] = (prodFreq[i.name] || 0) + 1;
     })
@@ -90,13 +91,83 @@ function computeStats() {
     uniqueProducts: uniqueProducts.size,
     favoriteDay,
     top5,
-    totalOrders: mockOrders.length,
+    totalOrders: orders.length,
   };
+}
+
+const personaConfig = {
+  family: {
+    label: "Family Household",
+    memberSince: "Member since March 2024",
+    summaryPrefix: "2 years of purchase history",
+  },
+  student: {
+    label: "Student",
+    memberSince: "Member since March 2025",
+    summaryPrefix: "1 year of purchase history",
+  },
+} as const;
+
+function FamilyIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="9" cy="7" r="3" stroke="white" strokeWidth="2" />
+      <path
+        d="M3 19c0-2.8 2.7-5 6-5s6 2.2 6 5"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx="17" cy="9" r="2.5" stroke="white" strokeWidth="1.5" />
+      <path
+        d="M21 19c0-2 -1.8-3.5-4-3.5"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function StudentIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 3L2 8l10 5 10-5-10-5z"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 10.5v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M22 8v6"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
 export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
   const [phase, setPhase] = useState(0);
-  const stats = useMemo(() => computeStats(), []);
+  const [persona, setPersona] = useState<"family" | "student">("family");
+  const orders = persona === "family" ? familyOrders : studentOrders;
+  const stats = useMemo(() => computeStats(orders), [persona]);
+  const config = personaConfig[persona];
+
+  // Reset phase on persona switch to re-trigger animations
+  const handlePersonaSwitch = (next: "family" | "student") => {
+    if (next === persona) return;
+    setPhase(0);
+    setPersona(next);
+  };
 
   useEffect(() => {
     if (!isActive) {
@@ -111,7 +182,7 @@ export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [isActive]);
+  }, [isActive, persona]);
 
   return (
     <motion.div
@@ -124,13 +195,41 @@ export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
       <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Step 1
       </p>
-      <h2 className="mb-8 text-center text-5xl font-bold text-[var(--text-primary)]">
+      <h2 className="mb-4 text-center text-5xl font-bold text-[var(--text-primary)]">
         Meet our customer
       </h2>
+
+      {/* Persona toggle tabs */}
+      <div className="mb-8 flex gap-6">
+        {(["family", "student"] as const).map((key) => (
+          <button
+            key={key}
+            onClick={() => handlePersonaSwitch(key)}
+            className={`
+              relative pb-2 text-lg transition-colors duration-200
+              ${
+                persona === key
+                  ? "font-bold text-[var(--text-primary)]"
+                  : "font-medium text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }
+            `}
+          >
+            {personaConfig[key].label}
+            {persona === key && (
+              <motion.div
+                layoutId="persona-underline"
+                className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full bg-[var(--picnic-red)]"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
 
       <div className="flex max-w-5xl w-full gap-8">
         {/* Left: profile card */}
         <motion.div
+          key={persona + "-card"}
           className="w-80 shrink-0 rounded-2xl bg-[var(--surface)] shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden"
           initial={{ opacity: 0, x: -30 }}
           animate={phase >= 1 ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
@@ -140,19 +239,11 @@ export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
           <div className="bg-[var(--picnic-red)] px-6 py-4">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="4" stroke="white" strokeWidth="2" />
-                  <path
-                    d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                {persona === "family" ? <FamilyIcon /> : <StudentIcon />}
               </div>
               <div>
-                <p className="text-lg font-bold text-white">Weekly shopper</p>
-                <p className="text-sm text-white/80">Member since March 2024</p>
+                <p className="text-lg font-bold text-white">{config.label}</p>
+                <p className="text-sm text-white/80">{config.memberSince}</p>
               </div>
             </div>
           </div>
@@ -198,7 +289,7 @@ export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
             <div className="flex flex-col gap-2">
               {stats.top5.map((p, i) => (
                 <motion.div
-                  key={p.name}
+                  key={persona + "-" + p.name}
                   className="flex items-center justify-between text-sm"
                   initial={{ opacity: 0, x: -10 }}
                   animate={
@@ -222,6 +313,7 @@ export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
 
         {/* Right: order history table */}
         <motion.div
+          key={persona + "-table"}
           className="flex-1 rounded-2xl bg-[var(--surface)] shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden"
           initial={{ opacity: 0, x: 30 }}
           animate={phase >= 1 ? { opacity: 1, x: 0 } : { opacity: 0, x: 30 }}
@@ -250,7 +342,7 @@ export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
             <tbody>
               {stats.last8.map((order, i) => (
                 <motion.tr
-                  key={order.date}
+                  key={persona + "-" + order.date}
                   className="border-b border-[var(--border)] last:border-b-0"
                   initial={{ opacity: 0, y: 8 }}
                   animate={
@@ -283,7 +375,7 @@ export function StepCustomerProfile({ isActive }: StepCustomerProfileProps) {
         animate={phase >= 3 ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
-        2 years of purchase history -- {stats.uniqueProducts} unique products,{" "}
+        {config.summaryPrefix} -- {stats.uniqueProducts} unique products,{" "}
         {stats.avgItems} items per order on average
       </motion.p>
     </motion.div>
