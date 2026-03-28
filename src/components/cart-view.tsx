@@ -107,8 +107,8 @@ export function CartView({ summary }: CartViewProps) {
                 <div className="flex-1 border-b border-[var(--border-light)]" />
               </div>
               <div className="flex flex-col gap-1.5">
-                {items.map((item) => (
-                  <CartItemRow key={item.itemId} item={item} />
+                {items.map((item, idx) => (
+                  <CartItemRow key={`${item.itemId}-${idx}`} item={item} />
                 ))}
               </div>
             </div>
