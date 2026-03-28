@@ -9,63 +9,70 @@ interface CartViewProps {
   isRunning?: boolean;
 }
 
-type Category = "produce" | "dairy" | "proteins" | "pantry" | "other";
+type Category = "produce" | "dairy" | "proteins" | "bakery" | "drinks" | "pantry" | "frozen" | "snacks" | "other";
 
 const categoryMeta: Record<Category, { label: string }> = {
-  produce: { label: "Produce" },
-  dairy: { label: "Dairy" },
-  proteins: { label: "Proteins" },
-  pantry: { label: "Pantry" },
-  other: { label: "Other" },
+  produce: { label: "Groente & Fruit" },
+  dairy: { label: "Zuivel & Eieren" },
+  proteins: { label: "Vlees & Vis" },
+  bakery: { label: "Bakkerij" },
+  drinks: { label: "Dranken" },
+  pantry: { label: "Houdbaar" },
+  frozen: { label: "Diepvries" },
+  snacks: { label: "Snacks & Snoep" },
+  other: { label: "Overig" },
 };
 
-const categoryOrder: Category[] = ["produce", "dairy", "proteins", "pantry", "other"];
+const categoryOrder: Category[] = ["produce", "dairy", "proteins", "bakery", "drinks", "pantry", "frozen", "snacks", "other"];
+
+const categoryKeywords: Record<Exclude<Category, "other">, string[]> = {
+  produce: [
+    "groente", "fruit", "sla", "tomaat", "komkommer", "paprika", "ui", "aardappel", "wortel",
+    "appel", "banaan", "citroen", "avocado", "spinazie", "broccoli", "champignon", "prei",
+    "courgette", "bloemkool",
+    // English fallbacks
+    "banana", "tomato", "onion", "lettuce", "carrot", "apple", "lemon", "spinach",
+  ],
+  dairy: [
+    "melk", "kaas", "yoghurt", "boter", "room", "ei", "eieren", "kwark", "zuivel", "vla",
+    // English fallbacks
+    "milk", "cheese", "yogurt", "butter", "cream", "egg",
+  ],
+  proteins: [
+    "kip", "kipfilet", "gehakt", "vlees", "vis", "zalm", "tonijn", "garnaal", "worst",
+    "hamburger", "schnitzel", "spek", "bacon",
+    // English fallbacks
+    "chicken", "beef", "salmon", "pork", "tofu", "fish",
+  ],
+  bakery: [
+    "brood", "croissant", "stokbrood", "bolletje", "cake", "muffin", "beschuit", "crackers",
+    "moulin", "boerenbrood", "vloerbrood",
+  ],
+  drinks: [
+    "water", "sap", "cola", "bier", "wijn", "koffie", "thee", "frisdrank", "limonade",
+    "espresso", "cappuccino", "juice",
+  ],
+  pantry: [
+    "pasta", "rijst", "olie", "azijn", "saus", "tomaten", "bonen", "noten", "meel", "suiker",
+    "zout", "peper", "kruiden", "bouillon", "soep",
+    // English fallbacks
+    "rice", "olive oil", "flour", "sauce", "soy", "garlic", "cereal", "oat",
+  ],
+  frozen: [
+    "diepvries", "ijs", "bevroren",
+  ],
+  snacks: [
+    "chips", "chocolade", "koek", "snoep", "popcorn", "drop", "cookie", "biscuit",
+  ],
+};
 
 function categorizeItem(item: CartItem): Category {
   const name = item.name.toLowerCase();
-  if (
-    name.includes("banana") ||
-    name.includes("tomato") ||
-    name.includes("avocado") ||
-    name.includes("spinach") ||
-    name.includes("onion") ||
-    name.includes("lettuce") ||
-    name.includes("carrot") ||
-    name.includes("apple") ||
-    name.includes("lemon")
-  )
-    return "produce";
-  if (
-    name.includes("milk") ||
-    name.includes("cheese") ||
-    name.includes("yogurt") ||
-    name.includes("butter") ||
-    name.includes("cream") ||
-    name.includes("egg")
-  )
-    return "dairy";
-  if (
-    name.includes("chicken") ||
-    name.includes("beef") ||
-    name.includes("salmon") ||
-    name.includes("pork") ||
-    name.includes("tofu") ||
-    name.includes("fish")
-  )
-    return "proteins";
-  if (
-    name.includes("pasta") ||
-    name.includes("rice") ||
-    name.includes("bread") ||
-    name.includes("olive oil") ||
-    name.includes("flour") ||
-    name.includes("sauce") ||
-    name.includes("soy") ||
-    name.includes("garlic") ||
-    name.includes("cereal") ||
-    name.includes("oat")
-  )
-    return "pantry";
+  for (const [category, keywords] of Object.entries(categoryKeywords)) {
+    if (keywords.some((kw) => name.includes(kw))) {
+      return category as Category;
+    }
+  }
   return "other";
 }
 

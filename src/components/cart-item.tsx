@@ -12,7 +12,7 @@ interface CartItemProps {
 const diffStyles: Record<string, string> = {
   added: "ring-1 ring-green-200 bg-green-50/40",
   removed: "ring-1 ring-red-200 bg-red-50/30 opacity-50",
-  substituted: "ring-1 ring-amber-200 bg-amber-50/30",
+  substituted: "border-l-3 border-l-amber-400",
   unchanged: "",
 };
 
@@ -110,14 +110,17 @@ export function CartItemRow({ item }: CartItemProps) {
           </div>
           {item.diffStatus === "substituted" && item.reasoning && (
             <p className="text-xs text-[var(--text-muted)] truncate mt-0.5">
-              {item.reasoning}
+              {(() => {
+                const savingsMatch = item.reasoning.match(/saves?\s+EUR\s+([\d.,]+)/i);
+                return savingsMatch ? `Swapped -- EUR ${savingsMatch[1]} saved` : "Swapped";
+              })()}
             </p>
           )}
         </div>
 
         {/* Price -- right aligned */}
         <span
-          className={`ml-2 shrink-0 text-sm tabular-nums text-right whitespace-nowrap ${
+          className={`ml-2 shrink-0 text-sm tabular-nums whitespace-nowrap min-w-[70px] text-right ${
             isRemoved
               ? "text-[var(--text-muted)] line-through"
               : "text-[var(--text-primary)]"
