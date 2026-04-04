@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fefcfa;
+  --surface: #ffffff;
+  --surface-muted: #faf7f4;
+  --surface-accent: #f6f4f1;
+  --border: #ede8e3;
+  --border-light: #f3efeb;
+  --text-primary: #2d2319;
+  --text-secondary: #6b5e52;
+  --text-muted: #a89c90;
+  --accent: #e8590c;
+  --accent-light: #fff4ed;
+  --accent-hover: #d14e0a;
+  --success: #2e9e5a;
+  --success-light: #ecfdf5;
+  --danger: #d93b3b;
+  --danger-light: #fef2f1;
+  --info: #0ea5e9;
+  --info-light: #f0f9ff;
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+}
+
+body {
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Thin styled scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Slide-up animation for feed entries */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out both;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 1024px) {
+  .mobile-tab-bar {
+    display: flex;
+  }
+
+  .desktop-split {
+    display: none;
+  }
+
+  .mobile-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 1025px) {
+  .desktop-split {
+    display: flex;
+  }
+
+  .mobile-panel {
+    display: none;
+  }
+
+  .mobile-tab-bar {
+    display: none;
+  }
+}
+
+/* Fixed input bar on mobile */
+@media (max-width: 1024px) {
+  .input-bar-mobile {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .input-bar-spacer {
+    display: block;
+    height: 72px;
+    flex-shrink: 0;
+  }
+}
+
+@media (min-width: 1025px) {
+  .input-bar-spacer {
+    display: none;
+  }
+}
