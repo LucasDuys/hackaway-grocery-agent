@@ -1,0 +1,15 @@
+{
+  "categoryPageWithJsonLd": "<html><head><script type=\"application/ld+json\">{\"@type\":\"ItemList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"item\":{\"@type\":\"Product\",\"name\":\"Plus Halfvolle Melk 1L\",\"brand\":{\"@type\":\"Brand\",\"name\":\"Plus\"},\"image\":\"https://www.plus.nl/images/melk-halfvol.jpg\",\"gtin13\":\"8711800100013\",\"url\":\"https://www.plus.nl/producten/plus-halfvolle-melk\",\"offers\":{\"@type\":\"Offer\",\"price\":1.19,\"priceCurrency\":\"EUR\"}}},{\"@type\":\"ListItem\",\"item\":{\"@type\":\"Product\",\"name\":\"Gouda Kaas Jong 500g\",\"brand\":\"Milner\",\"image\":\"https://www.plus.nl/images/kaas-gouda.jpg\",\"url\":\"https://www.plus.nl/producten/gouda-kaas-jong\",\"offers\":{\"@type\":\"Offer\",\"price\":4.49,\"priceCurrency\":\"EUR\"}}}]}</script></head><body></body></html>",
+
+  "bonusPageWithJsonLd": "<html><head><script type=\"application/ld+json\">{\"@type\":\"Product\",\"name\":\"Pindakaas Naturel 350g\",\"brand\":{\"@type\":\"Brand\",\"name\":\"Calvé\"},\"image\":\"https://www.plus.nl/images/pindakaas.jpg\",\"gtin13\":\"8711200429301\",\"url\":\"https://www.plus.nl/producten/calve-pindakaas\",\"offers\":{\"@type\":\"Offer\",\"price\":2.49,\"priceCurrency\":\"EUR\",\"highPrice\":3.29}}</script></head><body></body></html>",
+
+  "categoryPageHtmlFallback": "<html><body><div class=\"product-card\"><div><h3 class=\"product-title\">Appelsap 1L</h3><span class=\"price\">€ 1,89</span><img src=\"https://www.plus.nl/images/appelsap.jpg\" /><a href=\"/producten/appelsap-1l\">Link</a></div></div></body></html>",
+
+  "bonusPageHtmlFallback": "<html><body><div class=\"product-card\"><div><h3 class=\"product-title\">Koffie Bonen 500g</h3><span class=\"old-price\">€ 7,99</span><span class=\"price\">€ 5,99</span><img src=\"https://www.plus.nl/images/koffie.jpg\" /><a href=\"/producten/koffie-bonen\">Link</a></div></div></body></html>",
+
+  "emptyPage": "<html><body><div class=\"no-products\">Geen producten gevonden</div></body></html>",
+
+  "missingFieldsJsonLd": "<html><head><script type=\"application/ld+json\">{\"@type\":\"ItemList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"item\":{\"@type\":\"Product\",\"name\":\"Water Mineraal 1.5L\",\"offers\":{\"@type\":\"Offer\",\"price\":0.59,\"priceCurrency\":\"EUR\"}}},{\"@type\":\"ListItem\",\"item\":{\"@type\":\"Product\",\"name\":null,\"offers\":{\"@type\":\"Offer\",\"price\":1.99}}},{\"@type\":\"ListItem\",\"item\":{\"@type\":\"Product\",\"name\":\"Gratis Product\",\"offers\":{\"@type\":\"Offer\"}}}]}</script></head><body></body></html>",
+
+  "invalidJsonLd": "<html><head><script type=\"application/ld+json\">{invalid json content</script></head><body></body></html>"
+}
