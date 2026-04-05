@@ -1,0 +1,131 @@
+{
+  "categories": [
+    { "id": "zuivel", "title": "Zuivel, eieren" },
+    { "id": "brood", "title": "Brood, gebak" }
+  ],
+  "searchPage1": {
+    "products": {
+      "data": [
+        {
+          "id": "70100001",
+          "title": "Jumbo Halfvolle Melk",
+          "brand": "Jumbo",
+          "category": "Zuivel",
+          "sku": "70100001",
+          "gtins": ["8718452068654"],
+          "imageInfo": {
+            "primaryView": [
+              {
+                "url": "https://static.jumbo.com/product_images/70100001_1-360x360.png",
+                "width": 360,
+                "height": 360
+              }
+            ]
+          },
+          "prices": {
+            "price": {
+              "currency": "EUR",
+              "amount": 129
+            },
+            "promotionalPrice": null,
+            "unitPrice": {
+              "unit": "LITER",
+              "price": {
+                "currency": "EUR",
+                "amount": 129
+              }
+            }
+          },
+          "quantity": "1 liter",
+          "link": "/producten/jumbo-halfvolle-melk-70100001"
+        },
+        {
+          "id": "70200002",
+          "title": "Jumbo Pindakaas",
+          "brand": "Jumbo",
+          "category": "Broodbeleg",
+          "sku": "70200002",
+          "gtins": ["8718452199887"],
+          "imageInfo": {
+            "primaryView": [
+              {
+                "url": "https://static.jumbo.com/product_images/70200002_1-360x360.png",
+                "width": 360,
+                "height": 360
+              }
+            ]
+          },
+          "prices": {
+            "price": {
+              "currency": "EUR",
+              "amount": 199
+            },
+            "promotionalPrice": {
+              "currency": "EUR",
+              "amount": 149
+            },
+            "unitPrice": {
+              "unit": "KILOGRAM",
+              "price": {
+                "currency": "EUR",
+                "amount": 426
+              }
+            }
+          },
+          "quantity": "350 g",
+          "link": "/producten/jumbo-pindakaas-70200002"
+        }
+      ],
+      "total": 3,
+      "offset": 0,
+      "count": 2
+    },
+    "filters": {}
+  },
+  "searchPage2": {
+    "products": {
+      "data": [
+        {
+          "id": "70300003",
+          "title": "Campina Volle Yoghurt",
+          "brand": "Campina",
+          "category": "Zuivel",
+          "sku": "70300003",
+          "gtins": null,
+          "imageInfo": {
+            "primaryView": []
+          },
+          "prices": {
+            "price": {
+              "currency": "EUR",
+              "amount": 215
+            },
+            "promotionalPrice": null,
+            "unitPrice": {
+              "unit": "LITER",
+              "price": {
+                "currency": "EUR",
+                "amount": 430
+              }
+            }
+          },
+          "quantity": "500 ml",
+          "link": "/producten/campina-volle-yoghurt-70300003"
+        }
+      ],
+      "total": 3,
+      "offset": 2,
+      "count": 1
+    },
+    "filters": {}
+  },
+  "emptySearch": {
+    "products": {
+      "data": [],
+      "total": 0,
+      "offset": 0,
+      "count": 0
+    },
+    "filters": {}
+  }
+}

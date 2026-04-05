@@ -1,0 +1,157 @@
+{
+  "catalog": [
+    {
+      "type": "CATEGORY",
+      "id": "category-1",
+      "name": "Zuivel, eieren & boter",
+      "items": [
+        {
+          "type": "CATEGORY",
+          "id": "subcategory-1-1",
+          "name": "Melk",
+          "items": [
+            {
+              "type": "SINGLE_ARTICLE",
+              "id": "product-1",
+              "name": "Picnic Halfvolle Melk",
+              "price": 139,
+              "unit_quantity": "1 L",
+              "unit_quantity_sub": "1 liter",
+              "image_id": "d8a5c8a2e3e14f0b9b4f5e6a7c8d9e0f",
+              "max_count": 10,
+              "sold_out": false,
+              "decorators": [
+                {
+                  "type": "PRICE_DOWN",
+                  "original_price": 169
+                }
+              ],
+              "fresh_label": null,
+              "ean": "8710400005568"
+            },
+            {
+              "type": "SINGLE_ARTICLE",
+              "id": "product-2",
+              "name": "Arla Biologische Halfvolle Melk",
+              "price": 199,
+              "unit_quantity": "1 L",
+              "unit_quantity_sub": "1 liter",
+              "image_id": "a1b2c3d4e5f67890abcdef1234567890",
+              "max_count": 10,
+              "sold_out": false,
+              "decorators": [],
+              "fresh_label": {
+                "text": "Vers"
+              },
+              "ean": "5711953117008"
+            }
+          ]
+        },
+        {
+          "type": "CATEGORY",
+          "id": "subcategory-1-2",
+          "name": "Eieren",
+          "items": [
+            {
+              "type": "SINGLE_ARTICLE",
+              "id": "product-3",
+              "name": "Picnic Scharreleieren 10 stuks",
+              "price": 289,
+              "unit_quantity": "10 stuks",
+              "unit_quantity_sub": "10 stuks",
+              "image_id": "f0e1d2c3b4a596870123456789abcdef",
+              "max_count": 5,
+              "sold_out": false,
+              "decorators": [],
+              "fresh_label": null,
+              "ean": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "CATEGORY",
+      "id": "category-2",
+      "name": "Groente & fruit",
+      "items": [
+        {
+          "type": "SINGLE_ARTICLE",
+          "id": "product-4",
+          "name": "Hollandse Tomaten",
+          "price": 179,
+          "unit_quantity": "500 g",
+          "unit_quantity_sub": "500 gram",
+          "image_id": "1234567890abcdef1234567890abcdef",
+          "max_count": 10,
+          "sold_out": false,
+          "decorators": [
+            {
+              "type": "PRICE_DOWN",
+              "original_price": 229
+            }
+          ],
+          "fresh_label": {
+            "text": "Vers"
+          },
+          "ean": "8718906776741"
+        },
+        {
+          "type": "SINGLE_ARTICLE",
+          "id": "product-5",
+          "name": "Bananen",
+          "price": 149,
+          "unit_quantity": "1 kg",
+          "unit_quantity_sub": "1 kilogram",
+          "image_id": null,
+          "max_count": 10,
+          "sold_out": false,
+          "decorators": [],
+          "fresh_label": null,
+          "ean": null
+        }
+      ]
+    },
+    {
+      "type": "CATEGORY",
+      "id": "category-3",
+      "name": "Brood & gebak",
+      "items": [
+        {
+          "type": "SINGLE_ARTICLE",
+          "id": "product-6",
+          "name": "Picnic Volkoren Brood",
+          "price": 0,
+          "unit_quantity": "800 g",
+          "unit_quantity_sub": "800 gram",
+          "image_id": "abcdef1234567890abcdef1234567890",
+          "max_count": 5,
+          "sold_out": false,
+          "decorators": [],
+          "fresh_label": null
+        }
+      ]
+    },
+    {
+      "type": "CATEGORY",
+      "id": "category-4",
+      "name": "Dranken",
+      "items": [
+        {
+          "type": "SINGLE_ARTICLE",
+          "id": "product-7",
+          "name": "",
+          "price": 399,
+          "unit_quantity": "6 x 330 ml",
+          "unit_quantity_sub": "6 x 330 milliliter",
+          "image_id": "7890abcdef1234567890abcdef123456",
+          "max_count": 10,
+          "sold_out": false,
+          "decorators": [],
+          "fresh_label": null,
+          "ean": "1234567890123"
+        }
+      ]
+    }
+  ]
+}
