@@ -1,0 +1,97 @@
+{
+  "taxonomyCategories": [
+    { "id": 1, "slugifiedName": "zuivel-eieren", "name": "Zuivel, eieren" },
+    { "id": 2, "slugifiedName": "brood-gebak", "name": "Brood, gebak" }
+  ],
+  "searchPage1": {
+    "cards": [
+      {
+        "products": [
+          {
+            "webshopId": 12345,
+            "title": "AH Halfvolle melk",
+            "brand": "AH",
+            "category": "Zuivel",
+            "gtins": ["8710400005568"],
+            "images": [
+              { "url": "https://static.ah.nl/dam/product/12345.jpg", "width": 400, "height": 400 }
+            ],
+            "price": {
+              "now": 1.29,
+              "was": null,
+              "unitSize": "1 liter"
+            },
+            "unitPriceDescription": "1,29/liter",
+            "discount": null,
+            "link": "ah-halfvolle-melk"
+          },
+          {
+            "webshopId": 67890,
+            "title": "AH Pindakaas",
+            "brand": "AH",
+            "category": "Broodbeleg",
+            "gtins": ["8710400099887"],
+            "images": [
+              { "url": "https://static.ah.nl/dam/product/67890.jpg", "width": 400, "height": 400 }
+            ],
+            "price": {
+              "now": 1.99,
+              "was": 2.49,
+              "unitSize": "350 g"
+            },
+            "unitPriceDescription": "5,69/kg",
+            "discount": {
+              "bonusType": "BONUS",
+              "segmentType": "ALL",
+              "startDate": "2026-04-01",
+              "endDate": "2026-04-07"
+            },
+            "link": "ah-pindakaas"
+          }
+        ]
+      }
+    ],
+    "page": {
+      "totalPages": 2,
+      "size": 36,
+      "totalElements": 3
+    }
+  },
+  "searchPage2": {
+    "cards": [
+      {
+        "products": [
+          {
+            "webshopId": 11111,
+            "title": "Campina Volle Yoghurt",
+            "brand": "Campina",
+            "category": "Zuivel",
+            "gtins": null,
+            "images": [],
+            "price": {
+              "now": 2.15,
+              "was": null,
+              "unitSize": "500 ml"
+            },
+            "unitPriceDescription": "4,30/liter",
+            "discount": null,
+            "link": "campina-volle-yoghurt"
+          }
+        ]
+      }
+    ],
+    "page": {
+      "totalPages": 2,
+      "size": 36,
+      "totalElements": 3
+    }
+  },
+  "emptySearch": {
+    "cards": [],
+    "page": {
+      "totalPages": 0,
+      "size": 36,
+      "totalElements": 0
+    }
+  }
+}
