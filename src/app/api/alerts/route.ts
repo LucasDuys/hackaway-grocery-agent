@@ -1,15 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { AlertService, type SupabaseClient as AlertSupabaseClient } from '@/lib/alerts/alert-service'
-
-function createSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars')
-  }
-  return createClient(url, key)
-}
+import { store } from '@/lib/local-store'
 
 /**
  * GET /api/alerts
@@ -20,15 +10,13 @@ export async function GET(request: Request) {
     const url = new URL(request.url)
     const activeOnly = url.searchParams.get('active') === 'true'
 
-    const supabase = createSupabaseAdmin()
-    const service = new AlertService(supabase as unknown as AlertSupabaseClient)
-    const alerts = await service.getAlerts({ activeOnly })
+    const alerts = store.getAlerts(activeOnly)
 
     return NextResponse.json({ alerts })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -36,36 +24,29 @@ export async function GET(request: Request) {
 /**
  * POST /api/alerts
  * Create a new price alert.
- * Body: { productId: string, targetPriceCents: number, unifiedProductId?: string }
+ * Body: { productName: string, targetPriceCents: number }
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json() as {
-      productId?: string
+      productName?: string
       targetPriceCents?: number
-      unifiedProductId?: string
     }
 
-    if (!body.productId || typeof body.targetPriceCents !== 'number') {
+    if (!body.productName || typeof body.targetPriceCents !== 'number') {
       return NextResponse.json(
-        { error: 'productId (string) and targetPriceCents (number) are required' },
-        { status: 400 }
+        { error: 'productName (string) and targetPriceCents (number) are required' },
+        { status: 400 },
       )
     }
 
-    const supabase = createSupabaseAdmin()
-    const service = new AlertService(supabase as unknown as AlertSupabaseClient)
-    const alert = await service.createAlert(
-      body.productId,
-      body.targetPriceCents,
-      body.unifiedProductId
-    )
+    const alert = store.createAlert(body.productName, body.targetPriceCents)
 
     return NextResponse.json({ alert }, { status: 201 })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

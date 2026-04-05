@@ -1,0 +1,182 @@
+[
+  {
+    "storeSlug": "ah",
+    "storeName": "Albert Heijn Museumplein",
+    "latitude": 52.3580,
+    "longitude": 4.8786,
+    "address": "Van Baerlestraat 33A",
+    "city": "Amsterdam",
+    "postalCode": "1071 AP"
+  },
+  {
+    "storeSlug": "ah",
+    "storeName": "Albert Heijn Blaak",
+    "latitude": 51.9200,
+    "longitude": 4.4880,
+    "address": "Blaak 4",
+    "city": "Rotterdam",
+    "postalCode": "3011 TA"
+  },
+  {
+    "storeSlug": "ah",
+    "storeName": "Albert Heijn Hoog Catharijne",
+    "latitude": 52.0894,
+    "longitude": 5.1101,
+    "address": "Godebaldkwartier 275",
+    "city": "Utrecht",
+    "postalCode": "3511 DT"
+  },
+  {
+    "storeSlug": "ah",
+    "storeName": "Albert Heijn Eindhoven Centrum",
+    "latitude": 51.4381,
+    "longitude": 5.4752,
+    "address": "Demer 36",
+    "city": "Eindhoven",
+    "postalCode": "5611 AR"
+  },
+  {
+    "storeSlug": "ah",
+    "storeName": "Albert Heijn Grote Marktstraat",
+    "latitude": 52.0767,
+    "longitude": 4.3117,
+    "address": "Grote Marktstraat 59",
+    "city": "Den Haag",
+    "postalCode": "2511 BH"
+  },
+  {
+    "storeSlug": "jumbo",
+    "storeName": "Jumbo Nieuwmarkt",
+    "latitude": 52.3726,
+    "longitude": 4.9005,
+    "address": "Nieuwmarkt 18",
+    "city": "Amsterdam",
+    "postalCode": "1012 CR"
+  },
+  {
+    "storeSlug": "jumbo",
+    "storeName": "Jumbo Alexandrium",
+    "latitude": 51.9427,
+    "longitude": 4.5375,
+    "address": "Alexandrium Woonmall",
+    "city": "Rotterdam",
+    "postalCode": "3065 NA"
+  },
+  {
+    "storeSlug": "jumbo",
+    "storeName": "Jumbo Utrecht Vredenburg",
+    "latitude": 52.0929,
+    "longitude": 5.1142,
+    "address": "Vredenburg 60",
+    "city": "Utrecht",
+    "postalCode": "3511 BD"
+  },
+  {
+    "storeSlug": "jumbo",
+    "storeName": "Jumbo Eindhoven Woensel",
+    "latitude": 51.4571,
+    "longitude": 5.4697,
+    "address": "Winkelcentrum Woensel 350",
+    "city": "Eindhoven",
+    "postalCode": "5625 AG"
+  },
+  {
+    "storeSlug": "jumbo",
+    "storeName": "Jumbo Den Haag Leyweg",
+    "latitude": 52.0500,
+    "longitude": 4.3000,
+    "address": "Leyweg 545",
+    "city": "Den Haag",
+    "postalCode": "2545 SE"
+  },
+  {
+    "storeSlug": "lidl",
+    "storeName": "Lidl Amsterdam Kinkerstraat",
+    "latitude": 52.3667,
+    "longitude": 4.8700,
+    "address": "Kinkerstraat 212",
+    "city": "Amsterdam",
+    "postalCode": "1053 EM"
+  },
+  {
+    "storeSlug": "lidl",
+    "storeName": "Lidl Rotterdam Coolsingel",
+    "latitude": 51.9228,
+    "longitude": 4.4799,
+    "address": "Coolsingel 44",
+    "city": "Rotterdam",
+    "postalCode": "3011 AD"
+  },
+  {
+    "storeSlug": "lidl",
+    "storeName": "Lidl Utrecht Amsterdamsestraatweg",
+    "latitude": 52.0994,
+    "longitude": 5.1068,
+    "address": "Amsterdamsestraatweg 401",
+    "city": "Utrecht",
+    "postalCode": "3553 EA"
+  },
+  {
+    "storeSlug": "lidl",
+    "storeName": "Lidl Eindhoven Kerkstraat",
+    "latitude": 51.4396,
+    "longitude": 5.4786,
+    "address": "Kerkstraat 11",
+    "city": "Eindhoven",
+    "postalCode": "5611 GA"
+  },
+  {
+    "storeSlug": "lidl",
+    "storeName": "Lidl Den Haag Thomsonlaan",
+    "latitude": 52.0700,
+    "longitude": 4.2900,
+    "address": "Thomsonlaan 100",
+    "city": "Den Haag",
+    "postalCode": "2565 KK"
+  },
+  {
+    "storeSlug": "plus",
+    "storeName": "Plus Amsterdam Javastraat",
+    "latitude": 52.3610,
+    "longitude": 4.9280,
+    "address": "Javastraat 55",
+    "city": "Amsterdam",
+    "postalCode": "1094 HA"
+  },
+  {
+    "storeSlug": "plus",
+    "storeName": "Plus Rotterdam Bergse Dorpsstraat",
+    "latitude": 51.9580,
+    "longitude": 4.4800,
+    "address": "Bergse Dorpsstraat 68",
+    "city": "Rotterdam",
+    "postalCode": "3054 GH"
+  },
+  {
+    "storeSlug": "plus",
+    "storeName": "Plus Utrecht Nachtegaalstraat",
+    "latitude": 52.0830,
+    "longitude": 5.1180,
+    "address": "Nachtegaalstraat 40",
+    "city": "Utrecht",
+    "postalCode": "3581 AK"
+  },
+  {
+    "storeSlug": "plus",
+    "storeName": "Plus Eindhoven Strijp",
+    "latitude": 51.4450,
+    "longitude": 5.4500,
+    "address": "Glaslaan 2",
+    "city": "Eindhoven",
+    "postalCode": "5616 LW"
+  },
+  {
+    "storeSlug": "plus",
+    "storeName": "Plus Den Haag Fahrenheitstraat",
+    "latitude": 52.0850,
+    "longitude": 4.2850,
+    "address": "Fahrenheitstraat 580",
+    "city": "Den Haag",
+    "postalCode": "2561 DM"
+  }
+]

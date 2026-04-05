@@ -1,15 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { ListService } from '@/lib/lists/list-service'
-
-function createSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars')
-  }
-  return createClient(url, key)
-}
+import { store } from '@/lib/local-store'
 
 /**
  * GET /api/lists
@@ -17,9 +7,7 @@ function createSupabaseAdmin() {
  */
 export async function GET() {
   try {
-    const supabase = createSupabaseAdmin()
-    const service = new ListService(supabase as never)
-    const lists = await service.getAllLists()
+    const lists = store.getAllLists()
     return NextResponse.json(lists)
   } catch (err) {
     return NextResponse.json(
@@ -43,9 +31,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = createSupabaseAdmin()
-    const service = new ListService(supabase as never)
-    const list = await service.createList(body.name)
+    const list = store.createList(body.name)
     return NextResponse.json(list, { status: 201 })
   } catch (err) {
     return NextResponse.json(

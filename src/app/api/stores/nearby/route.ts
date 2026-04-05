@@ -1,15 +1,37 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import * as fs from 'fs'
+import * as path from 'path'
 import { findNearestStores } from '@/lib/locations/nearest-stores'
 import type { StoreLocation } from '@/lib/locations/types'
 
-function createSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars')
+interface StoreLocationJson {
+  storeSlug: string
+  storeName: string
+  latitude: number
+  longitude: number
+  address: string
+  city: string
+  postalCode: string
+}
+
+function loadStoreLocations(): StoreLocation[] {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'store-locations.json')
+    const raw: StoreLocationJson[] = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    return raw.map((loc, idx) => ({
+      id: `loc-${idx}`,
+      storeId: loc.storeSlug,
+      storeSlug: loc.storeSlug,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      address: loc.address,
+      city: loc.city,
+      postalCode: loc.postalCode,
+      osmId: null,
+    }))
+  } catch {
+    return []
   }
-  return createClient(url, key)
 }
 
 /**
@@ -27,14 +49,14 @@ export async function GET(request: Request) {
     if (isNaN(lat) || isNaN(lng)) {
       return NextResponse.json(
         { error: 'lat and lng query parameters are required and must be numbers' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     if (isNaN(radius) || radius <= 0) {
       return NextResponse.json(
         { error: 'radius must be a positive number' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -42,27 +64,7 @@ export async function GET(request: Request) {
       ? storesParam.split(',').map((s) => s.trim()).filter(Boolean)
       : undefined
 
-    const supabase = createSupabaseAdmin()
-
-    const { data, error } = await supabase
-      .from('store_locations')
-      .select('id, store_id, stores(slug), latitude, longitude, address, city, postal_code, osm_id')
-
-    if (error) {
-      throw new Error(`Failed to fetch store locations: ${error.message}`)
-    }
-
-    const locations: StoreLocation[] = (data ?? []).map((row: Record<string, unknown>) => ({
-      id: row.id as string,
-      storeId: row.store_id as string,
-      storeSlug: (row.stores as { slug: string })?.slug ?? '',
-      latitude: row.latitude as number,
-      longitude: row.longitude as number,
-      address: row.address as string | null,
-      city: row.city as string | null,
-      postalCode: row.postal_code as string | null,
-      osmId: row.osm_id as number | null,
-    }))
+    const locations = loadStoreLocations()
 
     const results = findNearestStores(lat, lng, locations, {
       maxDistanceKm: radius,
@@ -84,7 +86,7 @@ export async function GET(request: Request) {
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

@@ -1,19 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { ListService } from '@/lib/lists/list-service'
-
-function createSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars')
-  }
-  return createClient(url, key)
-}
+import { store } from '@/lib/local-store'
 
 /**
  * POST /api/lists/[id]/items
- * Adds an item to a list. Accepts { productName, quantity?, unifiedProductId? }.
+ * Adds an item to a list. Accepts { productName, quantity? }.
  */
 export async function POST(
   request: Request,
@@ -24,7 +14,6 @@ export async function POST(
     const body = await request.json().catch(() => ({})) as {
       productName?: string
       quantity?: number
-      unifiedProductId?: string
     }
 
     if (!body.productName || typeof body.productName !== 'string') {
@@ -34,16 +23,12 @@ export async function POST(
       )
     }
 
-    const supabase = createSupabaseAdmin()
-    const service = new ListService(supabase as never)
-    const item = await service.addItem(
-      id,
-      body.productName,
-      body.quantity,
-      body.unifiedProductId,
-    )
+    const item = store.addItem(id, body.productName, body.quantity)
     return NextResponse.json(item, { status: 201 })
   } catch (err) {
+    if (err instanceof Error && err.message === 'List not found') {
+      return NextResponse.json({ error: 'List not found' }, { status: 404 })
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal server error' },
       { status: 500 },
@@ -70,11 +55,12 @@ export async function DELETE(
       )
     }
 
-    const supabase = createSupabaseAdmin()
-    const service = new ListService(supabase as never)
-    await service.removeItem(id, body.itemId)
+    store.removeItem(id, body.itemId)
     return NextResponse.json({ success: true })
   } catch (err) {
+    if (err instanceof Error && err.message === 'List not found') {
+      return NextResponse.json({ error: 'List not found' }, { status: 404 })
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal server error' },
       { status: 500 },
@@ -110,11 +96,12 @@ export async function PATCH(
       )
     }
 
-    const supabase = createSupabaseAdmin()
-    const service = new ListService(supabase as never)
-    await service.updateItemQuantity(id, body.itemId, body.quantity)
+    store.updateItemQuantity(id, body.itemId, body.quantity)
     return NextResponse.json({ success: true })
   } catch (err) {
+    if (err instanceof Error && (err.message === 'List not found' || err.message === 'Item not found')) {
+      return NextResponse.json({ error: err.message }, { status: 404 })
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal server error' },
       { status: 500 },
