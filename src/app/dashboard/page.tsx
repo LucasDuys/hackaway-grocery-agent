@@ -4,87 +4,78 @@ import { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/header";
 import { StoreLogo } from "@/components/store-logo";
 import type { StoreSlug } from "@/lib/scrapers/types";
-import type { PriceChange } from "@/lib/prices/types";
 
-interface StoreComparison {
-  storeSlug: StoreSlug;
+interface StoreBreakdownItem {
+  storeSlug: string;
   storeName: string;
-  totalCents: number;
-  missingItems: number;
+  productCount: number;
+  avgPriceCents: number;
 }
 
-interface TrackedProduct {
-  id: string;
+interface CheapestProduct {
   name: string;
-  storeSlug: StoreSlug;
-  currentPriceCents: number;
-  trend7d: "rising" | "falling" | "stable";
+  storeSlug: string;
+  storeName: string;
+  priceCents: number;
+  unitSize: string;
+}
+
+interface Deal {
+  name: string;
+  storeSlug: string;
+  storeName: string;
+  priceCents: number;
+  originalPriceCents: number;
+  savingsCents: number;
+  savingsPercent: number;
+  unitSize: string;
+}
+
+interface StoreComparison {
+  storeSlug: string;
+  storeName: string;
+  totalCents: number;
+  itemsFound: number;
+  itemsMissing: number;
+}
+
+interface SavingsSummary {
+  optimizedTotalCents: number;
+  cheapestSingleStoreCents: number;
+  savingsCents: number;
+  savingsPercent: number;
+  basketSize: number;
+  optimizedItemsFound: number;
 }
 
 interface DashboardData {
-  savingsCents: number;
-  optimizedTotalCents: number;
+  totalProducts: number;
+  storeBreakdown: StoreBreakdownItem[];
+  cheapestProducts: CheapestProduct[];
+  deals: Deal[];
   storeComparisons: StoreComparison[];
-  trackedProducts: TrackedProduct[];
-  deals: PriceChange[];
-  cheapestByCategory: { category: string; storeSlug: StoreSlug; storeName: string }[];
+  savingsSummary: SavingsSummary;
 }
 
 function formatEur(cents: number): string {
   return `EUR ${(cents / 100).toFixed(2).replace(".", ",")}`;
 }
 
-function TrendIndicator({ trend }: { trend: "rising" | "falling" | "stable" }) {
-  if (trend === "rising") {
-    return <span className="text-[var(--danger)] font-semibold">^ Up</span>;
-  }
-  if (trend === "falling") {
-    return <span className="text-[var(--success)] font-semibold">v Down</span>;
-  }
-  return <span className="text-[var(--text-muted)] font-semibold">-- Stable</span>;
-}
-
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
-      // In production this would fetch from API routes.
-      // For now, use demo data to render the dashboard.
-      const demo: DashboardData = {
-        savingsCents: 1247,
-        optimizedTotalCents: 4823,
-        storeComparisons: [
-          { storeSlug: "ah", storeName: "Albert Heijn", totalCents: 5670, missingItems: 0 },
-          { storeSlug: "jumbo", storeName: "Jumbo", totalCents: 5420, missingItems: 0 },
-          { storeSlug: "lidl", storeName: "Lidl", totalCents: 4980, missingItems: 2 },
-          { storeSlug: "aldi", storeName: "Aldi", totalCents: 5100, missingItems: 1 },
-          { storeSlug: "plus", storeName: "Plus", totalCents: 5350, missingItems: 0 },
-          { storeSlug: "picnic", storeName: "Picnic", totalCents: 5200, missingItems: 3 },
-        ],
-        trackedProducts: [
-          { id: "1", name: "Halfvolle melk 1L", storeSlug: "ah", currentPriceCents: 119, trend7d: "stable" },
-          { id: "2", name: "Pindakaas 350g", storeSlug: "jumbo", currentPriceCents: 249, trend7d: "falling" },
-          { id: "3", name: "Biologisch brood", storeSlug: "lidl", currentPriceCents: 189, trend7d: "rising" },
-          { id: "4", name: "Kipfilet 500g", storeSlug: "ah", currentPriceCents: 549, trend7d: "falling" },
-          { id: "5", name: "Appels 1kg", storeSlug: "plus", currentPriceCents: 199, trend7d: "stable" },
-        ],
-        deals: [
-          { productId: "d1", productName: "Douwe Egberts Koffie", storeSlug: "ah", oldPriceCents: 899, newPriceCents: 599, changeCents: 300, changePercent: 33, direction: "down" },
-          { productId: "d2", productName: "Optimel Yoghurt", storeSlug: "jumbo", oldPriceCents: 199, newPriceCents: 149, changeCents: 50, changePercent: 25, direction: "down" },
-          { productId: "d3", productName: "Heineken 6-pack", storeSlug: "lidl", oldPriceCents: 599, newPriceCents: 449, changeCents: 150, changePercent: 25, direction: "down" },
-        ],
-        cheapestByCategory: [
-          { category: "Zuivel", storeSlug: "lidl", storeName: "Lidl" },
-          { category: "Brood", storeSlug: "aldi", storeName: "Aldi" },
-          { category: "Vlees", storeSlug: "lidl", storeName: "Lidl" },
-          { category: "Groente & Fruit", storeSlug: "plus", storeName: "Plus" },
-          { category: "Dranken", storeSlug: "jumbo", storeName: "Jumbo" },
-        ],
-      };
-
-      setData(demo);
+      const res = await fetch("/api/dashboard");
+      if (!res.ok) {
+        throw new Error("Failed to load dashboard data");
+      }
+      const json: DashboardData = await res.json();
+      setData(json);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -94,7 +85,7 @@ export default function DashboardPage() {
     loadData();
   }, [loadData]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
@@ -105,7 +96,36 @@ export default function DashboardPage() {
     );
   }
 
-  const maxStoreCost = Math.max(...data.storeComparisons.map((s) => s.totalCents));
+  if (error || !data) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <p className="text-sm font-medium text-[var(--danger)]">
+              {error || "Failed to load dashboard data"}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                loadData();
+              }}
+              className="mt-4 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const maxStoreCost =
+    data.storeComparisons.length > 0
+      ? Math.max(...data.storeComparisons.map((s) => s.totalCents))
+      : 1;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -117,14 +137,38 @@ export default function DashboardPage() {
           {/* Savings Hero */}
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--success-light)] p-6 text-center sm:p-8">
             <p className="text-sm font-medium text-[var(--text-secondary)]">
-              Total savings this month
+              Smart shopping saves you
             </p>
             <p className="mt-2 text-5xl font-bold text-[var(--success)] sm:text-6xl">
-              {formatEur(data.savingsCents)}
+              {formatEur(data.savingsSummary.savingsCents)}
             </p>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              Optimized basket: {formatEur(data.optimizedTotalCents)}
+              Optimized basket: {formatEur(data.savingsSummary.optimizedTotalCents)}
+              {" vs cheapest single store: "}
+              {formatEur(data.savingsSummary.cheapestSingleStoreCents)}
+              {" ("}
+              {data.savingsSummary.savingsPercent}% savings)
             </p>
+          </section>
+
+          {/* Overview Stats */}
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center">
+              <p className="text-xs font-medium text-[var(--text-muted)]">Total Products</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--text-primary)]">{data.totalProducts}</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center">
+              <p className="text-xs font-medium text-[var(--text-muted)]">Stores Tracked</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--text-primary)]">{data.storeBreakdown.length}</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center">
+              <p className="text-xs font-medium text-[var(--text-muted)]">Active Deals</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--text-primary)]">{data.deals.length}</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center">
+              <p className="text-xs font-medium text-[var(--text-muted)]">Basket Items Compared</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--text-primary)]">{data.savingsSummary.optimizedItemsFound}/{data.savingsSummary.basketSize}</p>
+            </div>
           </section>
 
           {/* Store Comparison Bar Chart */}
@@ -133,7 +177,7 @@ export default function DashboardPage() {
               Store Comparison
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Cost of your basket at each store vs optimized
+              Cost of a sample basket at each store vs optimized
             </p>
 
             <div className="mt-6 space-y-3">
@@ -147,20 +191,21 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <div
                     className="h-7 rounded-md bg-[var(--success)]"
-                    style={{ width: `${(data.optimizedTotalCents / maxStoreCost) * 100}%` }}
+                    style={{ width: `${(data.savingsSummary.optimizedTotalCents / maxStoreCost) * 100}%` }}
                   />
                 </div>
                 <span className="w-24 text-right text-sm font-semibold text-[var(--text-primary)]">
-                  {formatEur(data.optimizedTotalCents)}
+                  {formatEur(data.savingsSummary.optimizedTotalCents)}
                 </span>
               </div>
 
               {data.storeComparisons
+                .filter((s) => s.itemsFound > 0)
                 .sort((a, b) => a.totalCents - b.totalCents)
                 .map((store) => (
                   <div key={store.storeSlug} className="flex items-center gap-3">
                     <div className="w-20 shrink-0">
-                      <StoreLogo slug={store.storeSlug} size="sm" />
+                      <StoreLogo slug={store.storeSlug as StoreSlug} size="sm" />
                     </div>
                     <div className="flex-1">
                       <div
@@ -168,104 +213,122 @@ export default function DashboardPage() {
                         style={{ width: `${(store.totalCents / maxStoreCost) * 100}%` }}
                       />
                     </div>
-                    <span className="w-24 text-right text-sm font-medium text-[var(--text-secondary)]">
-                      {formatEur(store.totalCents)}
-                    </span>
+                    <div className="w-24 text-right">
+                      <span className="text-sm font-medium text-[var(--text-secondary)]">
+                        {formatEur(store.totalCents)}
+                      </span>
+                      {store.itemsMissing > 0 && (
+                        <p className="text-[10px] text-[var(--text-muted)]">
+                          {store.itemsMissing} missing
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
             </div>
           </section>
 
-          {/* Price Trends + Deals grid */}
+          {/* Store Breakdown + Deals grid */}
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Price Trends */}
+            {/* Store Breakdown */}
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                Price Trends
+                Products by Store
               </h2>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Tracked products with 7-day trend
+                Product count and average price
               </p>
 
               <div className="mt-4 divide-y divide-[var(--border-light)]">
-                {data.trackedProducts.map((product) => (
-                  <div key={product.id} className="flex items-center justify-between py-3">
+                {data.storeBreakdown.map((store) => (
+                  <div key={store.storeSlug} className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <StoreLogo slug={product.storeSlug} size="sm" />
-                      <span className="truncate text-sm font-medium text-[var(--text-primary)]">
-                        {product.name}
-                      </span>
+                      <StoreLogo slug={store.storeSlug as StoreSlug} size="sm" />
+                      <div>
+                        <span className="text-sm font-medium text-[var(--text-primary)]">
+                          {store.storeName}
+                        </span>
+                        <p className="text-xs text-[var(--text-muted)]">
+                          {store.productCount} products
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0 ml-3">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">
-                        {formatEur(product.currentPriceCents)}
-                      </span>
-                      <TrendIndicator trend={product.trend7d} />
-                    </div>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">
+                      avg {formatEur(store.avgPriceCents)}
+                    </span>
                   </div>
                 ))}
               </div>
             </section>
 
-            {/* Deals of the Week */}
+            {/* Deals */}
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                Deals of the Week
+                Best Deals
               </h2>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Biggest price drops this week
+                Products on sale, sorted by savings
               </p>
 
               <div className="mt-4 divide-y divide-[var(--border-light)]">
-                {data.deals.map((deal) => (
-                  <div key={deal.productId} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <StoreLogo slug={deal.storeSlug as StoreSlug} size="sm" />
-                      <span className="truncate text-sm font-medium text-[var(--text-primary)]">
-                        {deal.productName}
-                      </span>
+                {data.deals.length === 0 ? (
+                  <p className="py-4 text-sm text-[var(--text-muted)]">
+                    No deals found at the moment.
+                  </p>
+                ) : (
+                  data.deals.slice(0, 10).map((deal, index) => (
+                    <div key={`${deal.storeSlug}-${deal.name}-${index}`} className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <StoreLogo slug={deal.storeSlug as StoreSlug} size="sm" />
+                        <span className="truncate text-sm font-medium text-[var(--text-primary)]">
+                          {deal.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <span className="text-sm text-[var(--text-muted)] line-through">
+                          {formatEur(deal.originalPriceCents)}
+                        </span>
+                        <span className="text-sm font-bold text-[var(--success)]">
+                          {formatEur(deal.priceCents)}
+                        </span>
+                        <span className="rounded-full bg-[var(--success-light)] px-2 py-0.5 text-xs font-semibold text-[var(--success)]">
+                          -{deal.savingsPercent}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-3">
-                      <span className="text-sm text-[var(--text-muted)] line-through">
-                        {formatEur(deal.oldPriceCents)}
-                      </span>
-                      <span className="text-sm font-bold text-[var(--success)]">
-                        {formatEur(deal.newPriceCents)}
-                      </span>
-                      <span className="rounded-full bg-[var(--success-light)] px-2 py-0.5 text-xs font-semibold text-[var(--success)]">
-                        -{deal.changePercent}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </section>
           </div>
 
-          {/* Cheapest Store by Category */}
+          {/* Cheapest Products */}
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
             <h2 className="text-lg font-bold text-[var(--text-primary)]">
-              Cheapest Store This Week
+              Top 10 Cheapest Products
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Which store is cheapest by category
+              Lowest priced items across all stores
             </p>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {data.cheapestByCategory.map((item) => (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {data.cheapestProducts.map((product, index) => (
                 <div
-                  key={item.category}
+                  key={`${product.storeSlug}-${product.name}-${index}`}
                   className="flex items-center gap-3 rounded-xl border border-[var(--border-light)] bg-[var(--surface-muted)] px-4 py-3"
                 >
-                  <StoreLogo slug={item.storeSlug} size="md" />
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--text-primary)]">
-                      {item.category}
+                  <StoreLogo slug={product.storeSlug as StoreSlug} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                      {product.name}
                     </p>
                     <p className="text-xs text-[var(--text-muted)]">
-                      {item.storeName}
+                      {product.unitSize}
                     </p>
                   </div>
+                  <span className="shrink-0 text-sm font-bold text-[var(--success)]">
+                    {formatEur(product.priceCents)}
+                  </span>
                 </div>
               ))}
             </div>

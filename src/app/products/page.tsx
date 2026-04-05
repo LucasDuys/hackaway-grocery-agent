@@ -16,10 +16,13 @@ interface StoreEntry {
 }
 
 interface SearchResult {
-  unifiedProductId: string;
+  unifiedProductId?: string;
   canonicalName: string;
   category: string | null;
+  imageUrl?: string | null;
   stores: StoreEntry[];
+  cheapestPriceCents?: number;
+  storeCount?: number;
 }
 
 type SortOption = "cheapest" | "alphabetical" | "stores";
@@ -407,8 +410,9 @@ export default function ProductsPage() {
 
           {!isLoading && sortedResults.length > 0 && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {sortedResults.map((product) => {
-                const isExpanded = expandedId === product.unifiedProductId;
+              {sortedResults.map((product, index) => {
+                const productKey = product.unifiedProductId || `${product.canonicalName}-${index}`;
+                const isExpanded = expandedId === productKey;
                 const cheapest = getCheapestPrice(product);
                 const storeCount = product.stores.filter((s) =>
                   selectedStores.includes(s.storeSlug),
@@ -416,17 +420,43 @@ export default function ProductsPage() {
 
                 return (
                   <motion.div
-                    key={product.unifiedProductId}
+                    key={productKey}
                     layout
                     className="flex flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] transition-shadow hover:shadow-md"
                   >
                     <button
                       type="button"
                       onClick={() =>
-                        setExpandedId(isExpanded ? null : product.unifiedProductId)
+                        setExpandedId(isExpanded ? null : productKey)
                       }
                       className="flex flex-1 flex-col gap-2 p-4 text-left"
                     >
+                      {/* Product image */}
+                      <div className="mb-1 flex items-center justify-center">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.canonicalName}
+                            width={96}
+                            height={96}
+                            className="h-24 w-24 rounded-lg object-contain"
+                            loading="lazy"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              const placeholder = document.createElement("div");
+                              placeholder.className = "flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--surface-muted)] border border-[var(--border-light)]";
+                              const slug = product.stores[0]?.storeSlug || "ah";
+                              placeholder.innerHTML = `<span class="text-xs font-semibold text-[var(--text-muted)] uppercase">${slug}</span>`;
+                              target.parentElement?.replaceChild(placeholder, target);
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--surface-muted)] border border-[var(--border-light)]">
+                            <StoreLogo slug={(product.stores[0]?.storeSlug || "ah") as StoreSlug} size="md" />
+                          </div>
+                        )}
+                      </div>
+
                       {/* Product name */}
                       <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[var(--text-primary)]">
                         {product.canonicalName}
@@ -456,12 +486,13 @@ export default function ProductsPage() {
 
                       {/* Store logos preview */}
                       <div className="flex flex-wrap gap-1 border-t border-[var(--border-light)] pt-2">
-                        {product.stores
+                        {[...new Set(product.stores
                           .filter((s) => selectedStores.includes(s.storeSlug))
-                          .map((s) => (
+                          .map((s) => s.storeSlug))]
+                          .map((slug) => (
                             <StoreLogo
-                              key={s.storeSlug}
-                              slug={s.storeSlug as StoreSlug}
+                              key={slug}
+                              slug={slug as StoreSlug}
                               size="sm"
                             />
                           ))}

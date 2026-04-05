@@ -541,7 +541,7 @@ export default function MealsPage() {
                                   <ul className="mt-2 space-y-1 pl-1">
                                     {meal.ingredients.map((ing, i) => (
                                       <li
-                                        key={i}
+                                        key={`${ing.name}-${i}`}
                                         className="flex items-center justify-between text-xs text-[var(--text-secondary)]"
                                       >
                                         <span>
@@ -604,7 +604,7 @@ export default function MealsPage() {
                 <div className="mt-4 divide-y divide-[var(--border-light)]">
                   {result.shoppingList.map((item, i) => (
                     <div
-                      key={i}
+                      key={`${item.name}-${i}`}
                       className="flex items-center justify-between py-2.5"
                     >
                       <div className="flex items-center gap-2 min-w-0">
