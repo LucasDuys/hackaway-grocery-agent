@@ -145,7 +145,48 @@ export default function MealsPage() {
         );
       }
 
-      const data: MealPlanResult = await res.json();
+      const raw = await res.json();
+
+      // Transform API response to page format
+      const mp = raw.mealPlan || raw;
+      const apiDays = mp.days || [];
+
+      const parsedDays: DayPlan[] = apiDays.map((d: { dayNumber?: number; meals?: Array<{ name: string; type?: string; servings?: number; ingredients?: Array<{ name: string; quantity?: string; estimatedPriceCents?: number }>; estimatedTotalCents?: number; preparationTimeMinutes?: number }> }, idx: number) => {
+        const meals = d.meals || [];
+        const findMeal = (type: string): Meal => {
+          const m = meals.find((m) => m.type === type) || meals[0];
+          if (!m) return { name: "No meal planned", prepTimeMinutes: 0, estimatedCostCents: 0, ingredients: [] };
+          return {
+            name: m.name,
+            prepTimeMinutes: m.preparationTimeMinutes || 0,
+            estimatedCostCents: m.estimatedTotalCents || 0,
+            ingredients: (m.ingredients || []).map((ing) => ({
+              name: ing.name,
+              amount: ing.quantity || "",
+              estimatedCostCents: ing.estimatedPriceCents || 0,
+            })),
+          };
+        };
+        return {
+          day: DAY_LABELS[idx % 7] || `Day ${idx + 1}`,
+          breakfast: findMeal("breakfast"),
+          lunch: findMeal("lunch"),
+          dinner: findMeal("dinner"),
+        };
+      });
+
+      const shoppingList: ShoppingItem[] = (mp.shoppingList || raw.shoppingList || []).map((item: { ingredientName?: string; name?: string; totalQuantity?: string; totalAmount?: string; estimatedPriceCents?: number; estimatedCostCents?: number }) => ({
+        name: item.ingredientName || item.name || "",
+        totalAmount: item.totalQuantity || item.totalAmount || "",
+        estimatedCostCents: item.estimatedPriceCents || item.estimatedCostCents || 0,
+      }));
+
+      const data: MealPlanResult = {
+        days: parsedDays,
+        shoppingList,
+        storeBreakdown: [],
+        totalCostCents: mp.totalCostCents || raw.totalCostCents || 0,
+      };
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
