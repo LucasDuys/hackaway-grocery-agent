@@ -28,12 +28,36 @@ export function Header() {
       </div>
 
       {/* Right: nav links */}
-      <nav className="flex items-center gap-2">
+      <nav className="flex items-center gap-1 sm:gap-2">
         <Link
           href="/"
           className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
         >
           Compare
+        </Link>
+        <Link
+          href="/dashboard"
+          className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
+        >
+          Savings
+        </Link>
+        <Link
+          href="/stores"
+          className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
+        >
+          Stores
+        </Link>
+        <Link
+          href="/alerts"
+          className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
+        >
+          Alerts
+        </Link>
+        <Link
+          href="/lists"
+          className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
+        >
+          Lists
         </Link>
         <Link
           href="/meals"
