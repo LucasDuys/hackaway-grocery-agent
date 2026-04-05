@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { AlertService } from '@/lib/alerts/alert-service'
+import { AlertService, type SupabaseClient as AlertSupabaseClient } from '@/lib/alerts/alert-service'
 
 function createSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const activeOnly = url.searchParams.get('active') === 'true'
 
     const supabase = createSupabaseAdmin()
-    const service = new AlertService(supabase)
+    const service = new AlertService(supabase as unknown as AlertSupabaseClient)
     const alerts = await service.getAlerts({ activeOnly })
 
     return NextResponse.json({ alerts })
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = createSupabaseAdmin()
-    const service = new AlertService(supabase)
+    const service = new AlertService(supabase as unknown as AlertSupabaseClient)
     const alert = await service.createAlert(
       body.productId,
       body.targetPriceCents,

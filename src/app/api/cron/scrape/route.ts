@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { ScraperOrchestrator } from '@/lib/scrapers/orchestrator'
+import type { SupabaseClient as ScraperSupabaseClient } from '@/lib/scrapers/db-writer'
 import type { StoreSlug } from '@/lib/scrapers/types'
 
 const VALID_SLUGS: StoreSlug[] = ['ah', 'jumbo', 'lidl', 'picnic', 'plus', 'aldi']
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
 
   try {
     const supabase = createSupabaseAdmin()
-    const orchestrator = new ScraperOrchestrator(supabase)
+    const orchestrator = new ScraperOrchestrator(supabase as unknown as ScraperSupabaseClient)
     const result = await orchestrator.runAll()
 
     return NextResponse.json(result)
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({})) as { stores?: string[] }
     const supabase = createSupabaseAdmin()
-    const orchestrator = new ScraperOrchestrator(supabase)
+    const orchestrator = new ScraperOrchestrator(supabase as unknown as ScraperSupabaseClient)
 
     if (body.stores && Array.isArray(body.stores) && body.stores.length > 0) {
       const invalidSlugs = body.stores.filter((s) => !isValidSlug(s))

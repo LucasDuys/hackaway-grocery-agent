@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { AlertService } from '@/lib/alerts/alert-service'
+import { AlertService, type SupabaseClient as AlertSupabaseClient } from '@/lib/alerts/alert-service'
 
 function createSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -22,7 +22,7 @@ export async function DELETE(
   try {
     const { id } = await params
     const supabase = createSupabaseAdmin()
-    const service = new AlertService(supabase)
+    const service = new AlertService(supabase as unknown as AlertSupabaseClient)
     await service.deleteAlert(id)
 
     return NextResponse.json({ success: true })
@@ -48,7 +48,7 @@ export async function PATCH(
 
     if (body.isActive === false) {
       const supabase = createSupabaseAdmin()
-      const service = new AlertService(supabase)
+      const service = new AlertService(supabase as unknown as AlertSupabaseClient)
       await service.deactivateAlert(id)
       return NextResponse.json({ success: true })
     }
