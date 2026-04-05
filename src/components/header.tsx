@@ -35,6 +35,12 @@ export function Header() {
         >
           Compare
         </Link>
+        <Link
+          href="/meals"
+          className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
+        >
+          Meals
+        </Link>
       </nav>
     </header>
   );
